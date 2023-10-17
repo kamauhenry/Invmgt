@@ -1,0 +1,23 @@
+{% extends 'app/layout.html' %}
+{% block content %}
+
+<div class="container d-flex align-items-center" style="min-height: 100vh;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1>Add Record</h1>
+            <br />
+
+            <form id="myForm" method="POST" action="{% url 'add_record' %}">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <br />
+                <button type="submit" class="btn btn-danger">Add Record</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary">Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

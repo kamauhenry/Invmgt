@@ -1,0 +1,172 @@
+body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+/* styles for validation helpers */
+.field-validation-error {
+    color: #b94a48;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+input.input-validation-error {
+    border: 1px solid #b94a48;
+}
+
+input[type="checkbox"].input-validation-error {
+    border: 0 none;
+}
+
+.validation-summary-errors {
+    color: #b94a48;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+body, h1, h2, h3, p {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+/* Navigation bar styles */
+.navbar {
+    background-color: #333;
+    color: #fff;
+}
+
+    .navbar a {
+        color: #fff;
+    }
+
+/* Container styles */
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* Footer styles */
+
+/* Add some margin to top-level headings */
+h1, h2, h3 {
+    margin-top: 20px;
+}
+
+/* Apply styles to links */
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+/* Apply styles to buttons */
+.button {
+    background-color: #007BFF;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+    .button:hover {
+        background-color: #0056b3;
+    }
+
+.nav-item {
+    margin-right: 10px; /* Adjust the value as needed */
+}
+.navbar-nav > li {
+    margin-right: 10px; /* Adjust the value as needed */
+}
+
+
+
+footer {
+    background: #f5f5f5;
+    text-align: center;
+    padding: 20px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right:0;
+     
+    height: 100px;
+    width: 100%;
+    overflow: hidden;
+}
+html{
+    height: 100%;
+    box-sizing: border-box;
+}
+body{
+    position:relative;
+    margin:0;
+    min-height:100%;
+    padding-bottom: 6.74rem;
+    box-sizing: inherit;
+}
+
+
+.navbar-custom .navbar-nav.ml-auto {
+    margin-left: auto;
+}
+
+.navbar-custom .nav-item {
+    margin-right: 10px; 
+}
+.custom-select {
+    /* Add your custom styles here */
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+
+@media screen and (max-width: 768px) {
+    /* Adjust styles for smaller screens */
+    body {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    input,
+    select,
+    textarea {
+        max-width: 100%;
+    }
+}

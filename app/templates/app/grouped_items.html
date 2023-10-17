@@ -1,0 +1,67 @@
+{% extends 'app/layout.html' %}
+
+{% block content %}
+{% load custom_filters %}
+<h1>Total Quantity and Subtotal for Each Group</h1>
+<form class="form-inline my-2 my-lg-0" method="GET">
+    <input class="form-control mr-sm-2" type="search" name="q" value="{{ search_query }}" placeholder="Search for an item" aria-label="Search">
+    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+</form>
+<br />
+<a href="{% url 'inventory' %}" class="btn btn-danger">Add Record</a>
+<a class="btn btn-warning" href="{% url 'groupedi_pdf' %}">Generate Pdf</a>
+
+<table class="table table-striped table-hover table-bordered">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Total Quantity</th>
+            <th>Total </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in grouped_items %}
+        <tr>
+            <td>{{ item.Item }}</td>
+            <td>{{ item.total_units }}</td>
+            <td>{{ item.total|floatformat:"2" }} Ksh</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <th>Total Amount </th>
+            <td>{{ total_amount|floatformat:"2" }} Ksh</td>
+        </tr>
+    </tbody>
+
+</table>
+
+    {% for item in grouped_items %}
+<h2>{{ item.Item }}</h2>
+        {% with instances=records_by_item|get_item:item.Item %}
+<table class="table-bordered table table-hover table table-striped">
+    <thead>
+        <tr>
+            <th>Item ID</th>
+            <th>Units</th>
+            <th>Unit of Measurement</th>
+            <th>Unit Cost</th>
+            <th>Date</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for instance in instances %}
+        <tr>
+            <td>{{ instance.Item_id }}</td>
+            <td>{{ instance.Units }}</td>
+            <td>{{ instance.Unit_of_measurement }}</td>
+            <td>{{ instance.Unit_cost|floatformat:"2" }} Ksh</td>
+            <td>{{ instance.Date }}</td>
+            <td>{{ instance.Subtotal|floatformat:"2" }} Ksh</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+        {% endwith %}
+    {% endfor %}
+{% endblock %}
