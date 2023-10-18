@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Sum, F
+from django.db.models import Model, Sum, F
 import pyodbc
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -63,7 +63,7 @@ class GroupedItems(models.Model):
 	total = models.PositiveIntegerField(default=0)
 	units_used = models.PositiveIntegerField(default=0)
 	units_available = models.PositiveIntegerField(default=0)
-	
+	Units_returned = models.PositiveIntegerField(default=0)
 	
 
 
@@ -94,6 +94,8 @@ class GroupedItems(models.Model):
 		indexes = [
 			models.Index(fields=['grouped_item', 'total_units'], name='grouped_item_total_units_idx'),
 		]
+
+
 
 
 class IssueItem(models.Model):
@@ -148,3 +150,28 @@ def calculate_totals(sender, instance, **kwargs):
 	grouped_item.calculate_totals()
 	grouped_item.function()
 	grouped_item.save()
+
+
+
+class Custom_UOM(models.Model):
+	UOM = models.CharField(max_length=20)
+	
+	def save(self, *args, **kwargs):
+		
+		super().save(*args, **kwargs)
+	
+
+class return_item(models.Model):
+	id = models.BigAutoField(primary_key=True)
+	person = models.CharField(max_length=20)
+	grouped_item = models.ForeignKey(
+		GroupedItems,
+		on_delete=models.CASCADE,
+		related_name='returned_items'
+	)
+	units_returned = models.PositiveIntegerField(default=0)
+	Date = models.DateField(default=timezone.now)
+
+	def save(self, *args, **kwargs):
+		self.grouped_item.calculate_totals()
+		super().save(*args, **kwargs)

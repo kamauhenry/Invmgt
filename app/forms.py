@@ -138,4 +138,15 @@ class IssueItemForm(forms.ModelForm):
 
         return units_issued     
         
+class Custom_UOM_form(forms.ModelForm):
+    Item = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    class Meta:
+        Model = Custom_UOM
+        
+    def __init__(self, *args, **kwargs):
+        super(Custom_UOM_form, self).__init__(*args, **kwargs)
+ 
     
