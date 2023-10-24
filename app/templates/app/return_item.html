@@ -1,0 +1,21 @@
+{% extends 'app/layout.html' %}
+{% block content %}
+
+<div class="col-md-6 offset-md-3">
+    <h1>Add Record</h1>
+    <br />
+
+    <form id="myForm" method="POST">
+        {% csrf_token %}
+
+        {{ return_form.as_p }}
+
+        <br />
+        <button type="submit" class="btn btn-warning">Update Record</button>
+
+    </form>
+
+
+</div>
+
+{% endblock %}

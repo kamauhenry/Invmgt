@@ -27,7 +27,7 @@ item_units_used = {}
 def connsql(request):
 	conn=pyodbc.connect('Driver={ODBC Driver 18 for SQL Server};'
 					  'Server=JAYDEN;'
-					  'Database=iwdb;'
+					  'Database=fpwdb;'
 					  'UID=sa;'
 					  'PWD=yrenhke;'
 					  'Trusted_Connnection=yes;'
@@ -59,9 +59,26 @@ def home(request):
 	)
 
 @login_required
+def return_item_view(request, pk):
+	record = IssueItem.objects.get( id = pk )
+	return_form = IssueItemForm(request.POST or None, instance = record)
+	
+	if request.method == 'POST':
+		if return_form.is_valid():
+			return_form.save()
+			messages.success(request, "Record Has Been Updated! ")
+			return redirect('issue_item')
+		
+	return render(request, 'app/return_item.html', {'return_form': return_form})
+
+
+
+
+@login_required
 def inventory(request):
 	"""Renders the contact page."""
 	form = SqlServerConnForm(request.POST or None, request.FILES or None)
+	Custom_uom_form = Custom_UOM_form(request.POST or None, request.FILES or None)
 	assert isinstance(request, HttpRequest)
 	return render(
 		request,
@@ -71,9 +88,46 @@ def inventory(request):
 			'message':'Your contact page.',
 			'year':datetime.now().year,
 			'form': form,
+			'Custom_uom_form': Custom_uom_form
 		}
 	)
 
+def add_custom_uom(request):
+	Custom_uom_form = Custom_UOM_form(request.POST or None)
+	if request.user.is_authenticated:
+		if request.method == "POST":
+			if Custom_uom_form.is_valid():
+				add_custom_uom = Custom_uom_form.save()
+				messages.success(request, "Record Added...")
+				
+
+				return redirect('app/inventory.html')
+		return render(request, 'app/inventory.html', {'Custom_uom_form':Custom_uom_form})
+	else:
+		messages.success(request, "You Must Be Logged In...")
+		return redirect('app/inventory.html')
+	
+
+def add_Person(request):
+	
+
+	people = Person.objects.all()
+	Person_form = Personform(request.POST or None)
+	if request.user.is_authenticated:
+		if request.method == "POST":
+			if Person_form.is_valid():
+				add_Person = Person_form.save()
+				messages.success(request, "Record Added...")
+				
+
+				return redirect('issue_item_view')
+		return render(request, 'app/person.html', {
+			'Person_form':Person_form,
+			'people':people	}
+				)
+	else:
+		messages.success(request, "You Must Be Logged In...")
+		return redirect('issue_item_view')
 
 def add_record(request):
 	form = SqlServerConnForm(request.POST or None)
@@ -138,6 +192,21 @@ def loginView(request):
 	else:
 		return render(request, 'index.html')
 	
+def labourers_view(request):
+	form = LabourForm(request.POST or None)
+	labourers = Labour.objects.all()
+	if request.method == 'POST' and form.is_valid():
+		labour = form.save()
+		
+		messages.success(request, "record added successfully !")
+		return ('app/labourers.html')
+	
+	return render(request,
+		   'app/labourers.html',
+		   {'form': form,
+			'labourers': labourers,	
+	  })
+
 
 def register_user(request):
 	form = SignUpForm(request.POST or None)
@@ -183,6 +252,7 @@ def issue_item_view(request):
 	search_query = request.GET.get('q', '')
 
 	grouped_items = GroupedItems.objects.all()
+	issue_items = IssueItem.objects.all()
 	issue_item_form = IssueItemForm(request.POST or None)
 	if search_query:
 		
@@ -199,11 +269,13 @@ def issue_item_view(request):
 	else:
 		issue_item_form = IssueItemForm()
 		
-	return render(request, 'app/issue_item.html', {
+		return render(request, 'app/issue_item.html', {
 		'grouped_items': grouped_items,
 		'issue_item_form': issue_item_form,
 		'search_query': search_query,  
+		'issue_items': issue_items,
 	})
+
 
 
 def loginpartial(request):
@@ -307,7 +379,7 @@ def groupedi_pdf(request):
 	except Exception as e:
 		# Handle exceptions here, e.g., log the error
 		# You can also return an error HttpResponse if needed
-		# For example, return a 500 Internal Server Error response
+		
 		return HttpResponse("Internal Server Error", status=500)
 	
 
@@ -324,10 +396,10 @@ def issuei_pdf(request):
 		items = IssueItem.objects.all()
 
 		# Define the table data as a list of lists
-		data.append(['Item', 'Person', 'Units Issued', 'Date'])
+		data.append(['Item', 'Person', 'Units Issued', 'Units Returned','Units Used', 'Date'])
 
 		for item in items:
-			data.append([item.grouped_item, item.person, item.Unit_issued, item.Date])
+			data.append([item.grouped_item, item.person, item.Unit_issued, item.units_returned, item.units_used, item.Date])
 
 		# Create a table with the data
 		table = Table(data)
@@ -356,3 +428,27 @@ def issuei_pdf(request):
 		
 		return HttpResponse("Internal Server Error", status=500)
 	
+
+
+	
+#def combined_monthly_expenditure(request):
+	# Monthly item expenditure
+#	monthly_item_expenditure = sqlserverconn.objects.annotate(
+#		month=TruncMonth('Date')
+#	).values('month').annotate(
+#		total_expenditure=Sum('Subtotal')
+#	).order_by('month')
+
+	# Monthly grouped expenditure
+#	monthly_grouped_expenditure = GroupedItems.objects.annotate(
+#		month=TruncMonth('issue_items__Date')
+#	).values('grouped_item', 'month').annotate(
+#		total_expenditure=Sum('issue_items__units_used')
+#	).order_by('grouped_item', 'month')
+
+#	return render
+#(#request, 'combined_monthly_expenditure.html', {
+	#	'monthly_item_expenditure': monthly_item_expenditure,
+	#	'monthly_grouped_expenditure': monthly_grouped_expenditure,
+	#})
+

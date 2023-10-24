@@ -22,8 +22,12 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('inventory/', views.inventory, name='inventory'),
     path('add_record/', views.add_record, name='add_record'),
+    path('add_custom_uom/', views.add_custom_uom, name='add_custom_uom'),
+    path('person/', views.add_Person, name='add_Person'),
     path('update_record/<int:pk>', views.update_record, name='update_record'),
     path('issue_item/', views.issue_item_view, name='issue_item_view'),
+    path('labourers/', views.labourers_view, name='labourers_view'),
+    path('return_item/<int:pk>', views.return_item_view, name='return_item_view'),
     path('delete_record/<int:pk>', views.delete_record, name='delete_record'),
     path('grouped_items/', views.grouped_itemsv, name='grouped_items'),
     path('login/',
@@ -44,7 +48,8 @@ urlpatterns = [
     path('reports_pdf/', views.reports_pdf, name='reports_pdf'),
     path('groupedi_pdf/', views.groupedi_pdf, name='groupedi_pdf'),
     path('issuei_pdf/', views.issuei_pdf, name='issuei_pdf'),
-
+    
+    
 
     
 

@@ -8,14 +8,16 @@ from django.db.models.signals import pre_save
 from datetime import *
 from django.utils import timezone
 
+from django.db.models.functions import TruncMonth
+
 
 # Define the sqlserverconn model with Subtotal property
 class sqlserverconn(models.Model):
-	Item_id = models.BigAutoField(primary_key=True, )
-	Item = models.CharField(max_length=30, db_index=True)
+	Item_id = models.BigAutoField(primary_key=True, db_column='Item_id' )
+	Item = models.CharField(max_length=30, db_index=True , db_column='Item')
 	Item_Description = models.CharField(max_length=30, null=True, blank=True)
 	Units = models.PositiveIntegerField()
-	Unit_of_measurement = models.CharField(max_length=15)
+	Unit_of_measurement = models.CharField(max_length=15, null=True , blank=True )
 	Unit_cost = models.FloatField()
 	Date = models.DateField()
 	Subtotal = models.FloatField(default=0)
@@ -59,20 +61,23 @@ def create_grouped_item(sender, instance, **kwargs):
 class GroupedItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	grouped_item = models.CharField(max_length=30, unique=True)
-	total_units = models.PositiveIntegerField(default=0)
+	total_units = models.DecimalField(max_digits=9, decimal_places=2, default=0)
 	total = models.PositiveIntegerField(default=0)
-	units_used = models.PositiveIntegerField(default=0)
-	units_available = models.PositiveIntegerField(default=0)
-	Units_returned = models.PositiveIntegerField(default=0)
+	used_units = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+	units_available = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 	
-
-
+		
+		
 	def calculate_totals(self):
 		issue_items = self.issue_items.all()
+		
 	   
-		self.units_used = issue_items.aggregate(units_issued=Sum('units_issued'))['units_issued'] or 0
-
-		self.units_available = self.total_units - self.units_used
+		self.used_units = issue_items.aggregate(units_used=Sum('units_used'))['units_used'] or 0
+		
+	
+		
+		
+		self.units_available = self.total_units  - self.used_units
 	
 	def function(self):
 		sqlserverconn_aggregate = sqlserverconn.objects.filter(grouped_item=self).aggregate(
@@ -95,27 +100,70 @@ class GroupedItems(models.Model):
 			models.Index(fields=['grouped_item', 'total_units'], name='grouped_item_total_units_idx'),
 		]
 
+class Person(models.Model):
+	person = models.CharField(max_length=20)
 
+	def __str__(self):
+		return self.person
 
 
 class IssueItem(models.Model):
 	id = models.BigAutoField(primary_key=True)
-	person = models.CharField(max_length=20)
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	grouped_item = models.ForeignKey(
 		GroupedItems,
 		on_delete=models.CASCADE,
 		related_name='issue_items'
 	)
-	units_issued = models.PositiveIntegerField(default=0)
+	units_issued = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+	units_returned = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+	units_used = models.DecimalField(max_digits=7, decimal_places=2, default=0)
 	Date = models.DateField(default=timezone.now)
+	
 
 	def save(self, *args, **kwargs):
+		
+		self.units_used = self.units_issued - self.units_returned
 		self.grouped_item.calculate_totals()
+		
 		super().save(*args, **kwargs)
-
-
-
+		
+	def __str__(self):
+		return str(self.person) 
 	
+
+
+
+
+class Custom_UOM(models.Model):
+	UOM = models.CharField(max_length=20, primary_key=True)
+	
+	def save(self, *args, **kwargs):
+		super().save(*args, **kwargs)
+	
+	def __str__(self):
+		return self.UOM
+
+
+class Labour(models.Model):
+	LABOUR_TYPES = (
+		('Constructor', 'Constructor'),
+		('Laborer', 'Laborer'),
+	)
+	labour_type = models.CharField(max_length=20, choices=LABOUR_TYPES)
+	NOL = models.PositiveIntegerField()
+	Date = models.DateField(default=timezone.now)
+	#NOL = number of labourers
+	labourer_cost = models.FloatField()
+	sub_total = models.FloatField(default=0)
+	
+	
+
+	def __str__(self):
+		return self.labour_type
+	
+	def save(self, *args, **kwargs):
+		self.sub_total = self.labourer_cost * self.NOL
 
 @receiver(post_save, sender=sqlserverconn)
 def create_issue_item(sender, instance, **kwargs):
@@ -152,26 +200,3 @@ def calculate_totals(sender, instance, **kwargs):
 	grouped_item.save()
 
 
-
-class Custom_UOM(models.Model):
-	UOM = models.CharField(max_length=20)
-	
-	def save(self, *args, **kwargs):
-		
-		super().save(*args, **kwargs)
-	
-
-class return_item(models.Model):
-	id = models.BigAutoField(primary_key=True)
-	person = models.CharField(max_length=20)
-	grouped_item = models.ForeignKey(
-		GroupedItems,
-		on_delete=models.CASCADE,
-		related_name='returned_items'
-	)
-	units_returned = models.PositiveIntegerField(default=0)
-	Date = models.DateField(default=timezone.now)
-
-	def save(self, *args, **kwargs):
-		self.grouped_item.calculate_totals()
-		super().save(*args, **kwargs)

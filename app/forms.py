@@ -51,23 +51,10 @@ class BootstrapAuthenticationForm(AuthenticationForm):
                                    'placeholder':'Password'}))
 
 class SqlServerConnForm(forms.ModelForm): 
-    UNIT_CHOICES = (
-        ('', 'Select Unit'),  # Blank option
-        ('m', 'm'),
-        ('ft', 'ft'),
-        ('kg', 'kg'),
-        ('bag', 'bag'),
-        ('pcs', 'pcs'),
-        ('trips', 'trips'),
-        ('Rolls', 'Rolls'),
-        ('fundis', 'fundis'),
-        ('contractor', 'contractor'),
-        ('litres', 'litres'),
-        ('other', 'other'),
-        
-        
-    )
-
+    
+   # UOM_CHOICES = [('', 'Select Unit')] + list(Custom_UOM.objects.values_list('UOM', 'UOM'))
+    #UOM_CHOICES = [('', 'Select Unit')] + list(Custom_UOM.objects.values_list('UOM', 'UOM'))
+    
     Item = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={'class': 'form-control'})
@@ -80,11 +67,13 @@ class SqlServerConnForm(forms.ModelForm):
     Units = forms.FloatField(
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
-    Unit_of_measurement = forms.ChoiceField(
-        choices=UNIT_CHOICES,
-        required = False,
-        widget= SelectOrTextInput(choices=UNIT_CHOICES, attrs={'class': 'form-control custom-select' , 'id': 'UOM_id'})
-    )
+    
+    Unit_of_measurement = forms.ModelChoiceField(
+    queryset=Custom_UOM.objects.all().order_by('UOM'),
+    empty_label='Select Unit',
+    widget=forms.Select(attrs={'class': 'form-control custom-select', 'id': 'UOM_id'})
+)
+    
     Unit_cost = forms.FloatField(
         widget = forms.NumberInput(attrs={'class': 'form-control'})
     )
@@ -109,44 +98,62 @@ class SqlServerConnForm(forms.ModelForm):
             
         ]
         
+    
+        
     def clean(self):
         cleaned_data = super().clean()
+       
         
+ 
+    
 class IssueItemForm(forms.ModelForm):
     Date = forms.DateField(
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         initial=timezone.now()
     )
-
+    
     class Meta:
         model = IssueItem
-        fields = ['person', 'grouped_item', 'units_issued', 'Date']
+        fields = ['person', 'grouped_item', 'units_issued','units_returned', 'Date']
 
     def __init__(self, *args, **kwargs):
         super(IssueItemForm, self).__init__(*args, **kwargs)
         self.fields['grouped_item'].queryset = GroupedItems.objects.all()
 
-    def clean_units_issued(self):
-        units_issued = self.cleaned_data.get('units_issued')
-        grouped_item = self.cleaned_data.get('grouped_item')
+   #
 
-        if units_issued > grouped_item.units_available:
-            
-            self.errors.pop('units_issued', None)
-
-            raise forms.ValidationError('You have exceeded the number of Units available.')
-
-        return units_issued     
+#
         
 class Custom_UOM_form(forms.ModelForm):
-    Item = forms.CharField(
+    UOM = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     class Meta:
-        Model = Custom_UOM
+        model = Custom_UOM
+        fields = ['UOM']
         
     def __init__(self, *args, **kwargs):
         super(Custom_UOM_form, self).__init__(*args, **kwargs)
  
+class Personform(forms.ModelForm):
+    person = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    class Meta:
+        model = Person
+        fields = ['person']
+        
+    def __init__(self, *args, **kwargs):
+        super(Personform, self).__init__(*args, **kwargs)
+
+class LabourForm(forms.ModelForm):
+    Date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        initial=timezone.now()
+    )
     
+    class Meta:
+        model = Labour
+        fields = ['labour_type', 'NOL', 'Date', 'labourer_cost']   

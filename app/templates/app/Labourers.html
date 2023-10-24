@@ -1,0 +1,52 @@
+{%  extends 'app/layout.html' %}
+    {% block content %}
+
+
+
+<div class="row justify-content-center container d-flex align-items-center p-2" style="min-height: 80vh;">
+    <div class="col-md-6">
+
+
+        <div class="col-md-6">
+            <form id="Add labour" method="POST" action="{% url 'labourers_view' %}">
+                {% csrf_token %}
+
+{{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Add Record</button>
+            </form>
+        </div>
+        <div>
+
+            <table class="table table-striped table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th>labour </th>
+                        <th>Number of Labourers</th>
+                        <th>labour Cost</th>
+                        <th>Sub Total</th>
+                        <th>Date</th>
+
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in labourers %}
+                    <tr>
+                        <td>{{ item.labour_type }}</td>
+                        <td>{{ item.NOL }}</td>
+                        <td>{{ item.labour_cost }}</td>
+                        <td>{{ item.Subtotal }}</td>
+                        <td>{{ item.Date }}</td>
+
+
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
