@@ -16,7 +16,7 @@ class sqlserverconn(models.Model):
 	Item_id = models.BigAutoField(primary_key=True, db_column='Item_id' )
 	Item = models.CharField(max_length=30, db_index=True , db_column='Item')
 	Item_Description = models.CharField(max_length=30, null=True, blank=True)
-	Units = models.PositiveIntegerField()
+	Units = models.FloatField(default=0)
 	Unit_of_measurement = models.CharField(max_length=15, null=True , blank=True )
 	Unit_cost = models.FloatField()
 	Date = models.DateField()
@@ -146,11 +146,8 @@ class Custom_UOM(models.Model):
 
 
 class Labour(models.Model):
-	LABOUR_TYPES = (
-		('Constructor', 'Constructor'),
-		('Laborer', 'Laborer'),
-	)
-	labour_type = models.CharField(max_length=20, choices=LABOUR_TYPES)
+
+	labour_type = models.CharField(max_length=20)
 	NOL = models.PositiveIntegerField()
 	Date = models.DateField(default=timezone.now)
 	#NOL = number of labourers
@@ -164,6 +161,10 @@ class Labour(models.Model):
 	
 	def save(self, *args, **kwargs):
 		self.sub_total = self.labourer_cost * self.NOL
+		super(Labour, self).save(*args, **kwargs)
+		
+		
+		
 
 @receiver(post_save, sender=sqlserverconn)
 def create_issue_item(sender, instance, **kwargs):

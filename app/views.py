@@ -101,7 +101,7 @@ def add_custom_uom(request):
 				messages.success(request, "Record Added...")
 				
 
-				return redirect('app/inventory.html')
+				return redirect('home')
 		return render(request, 'app/inventory.html', {'Custom_uom_form':Custom_uom_form})
 	else:
 		messages.success(request, "You Must Be Logged In...")
@@ -199,14 +199,42 @@ def labourers_view(request):
 		labour = form.save()
 		
 		messages.success(request, "record added successfully !")
-		return ('app/labourers.html')
-	
+		return redirect ('labourers_view')
+	total_amount= Labour.objects.aggregate(total_amount=Sum('sub_total'))['total_amount']
+
 	return render(request,
 		   'app/labourers.html',
 		   {'form': form,
 			'labourers': labourers,	
+			'total_amount': total_amount
 	  })
 
+def delete_labourer(request, pk):
+	if request.user.is_authenticated:
+		try:
+			delete_it = Labour.objects.get(id=pk)
+			delete_it.delete()
+			messages.success(request, 'Record deleted')
+		except Labour.DoesNotExist:
+			messages.error(request, 'Record not found')
+		
+		return redirect('labourers_view')
+	else:
+		messages.success(request, 'You must be logged in')
+		return redirect('labourers_view')
+	
+def update_labourer(request, pk):
+	if request.user.is_authenticated:
+		current_record = Labour.objects.get(id=pk)
+		form = LabourForm(request.POST or None, instance=current_record)
+		if form.is_valid():
+			form.save()
+			messages.success(request, "Record Has Been Updated!")
+			return redirect('labourers_view')
+		return render(request, 'app/update_labourer.html', {'form':form})
+	else:
+		messages.success(request, "You Must Be Logged In...")
+		return redirect('labourers_view')
 
 def register_user(request):
 	form = SignUpForm(request.POST or None)

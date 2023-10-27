@@ -5,42 +5,64 @@
 
 <div class="row justify-content-center container d-flex align-items-center p-2" style="min-height: 80vh;">
     <div class="col-md-6">
+        <h1>Add Record</h1>
+        <br />
 
 
         <div class="col-md-6">
             <form id="Add labour" method="POST" action="{% url 'labourers_view' %}">
                 {% csrf_token %}
 
-{{ form.as_p }}
+                {{ form.as_p }}
                 <button type="submit" class="btn btn-primary">Add Record</button>
             </form>
         </div>
         <div>
+           <table class="table table-striped table-hover table-bordered">
+    <thead>
+       
+    </thead>
+    <tbody>
+       
+        <tr>
+            <th>Total Amount </th>
+            <td>{{ total_amount|floatformat:"2" }} Ksh</td>
+        </tr>
+    </tbody>
+
+            </table>
+
+        </div>
+    </div>
+    <div>
+        <div>
 
             <table class="table table-striped table-hover table-bordered">
-                <thead>
+                <thead class="table-dark">
                     <tr>
-                        <th>labour </th>
-                        <th>Number of Labourers</th>
-                        <th>labour Cost</th>
-                        <th>Sub Total</th>
-                        <th>Date</th>
-
+                        <th style="width: 150px;">labour </th>
+                        <th style="width: 150px;">Number of Labourers</th>
+                        <th style="width: 150px;">labour Cost</th>
+                        <th style="width: 150px;">Sub Total</th>
+                        <th style="width: 200px;">Date</th>
+                        <th style="width: 200px;">Action</th>
 
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in labourers %}
+                    {% for item in labourers|dictsortreversed:"Date" %}
                     <tr>
                         <td>{{ item.labour_type }}</td>
                         <td>{{ item.NOL }}</td>
-                        <td>{{ item.labour_cost }}</td>
-                        <td>{{ item.Subtotal }}</td>
+                        <td>{{ item.labourer_cost }}</td>
+                        <td>{{ item.sub_total }}</td>
                         <td>{{ item.Date }}</td>
-
-
-
+                        <td>
+                            <a href="{% url 'delete_labourer' item.pk %}">Delete</a>
+                            <a href="{% url 'update_labourer' item.pk %}" class="btn btn-secondary">Update Record</a>
+                        </td>
                     </tr>
+
                     {% endfor %}
                 </tbody>
             </table>

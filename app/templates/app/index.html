@@ -7,6 +7,7 @@
 
 
 <a href="{% url 'inventory' %}" class="btn btn-danger">Add Record</a>
+<a href="{% url 'issue_item_view' %}" class="btn btn-danger">Issue Item</a>
 <a class="btn btn-warning" href="{% url 'reports_pdf' %}">Generate Report</a>
 
         <table class="table table-striped table-hover table-bordered">
@@ -26,7 +27,7 @@
                 {% for sqlserverconn in sqlserverconns|dictsortreversed:"Date" %}
                 <tr>
                     <td>{{ sqlserverconn.Item }}</td>
-                    <td>{{ sqlserverconn.Units }}</td>
+                    <td>{{ sqlserverconn.Units|floatformat:"2" }}</td>
                     <td>{{ sqlserverconn.Unit_of_measurement }}</td>
                     <td>{{ sqlserverconn.Unit_cost|floatformat:"2" }} Ksh</td>
                     <td>{{ sqlserverconn.Date }}</td>

@@ -47,6 +47,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'issue_item_view' %}">Issue Item</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'labourers_view' %}">Labour Records</a>
+                </li>
 
                 {% if user.is_authenticated and user.is_staff and user.is_superuser %}
                 <li class="nav-item">

@@ -156,4 +156,5 @@ class LabourForm(forms.ModelForm):
     
     class Meta:
         model = Labour
-        fields = ['labour_type', 'NOL', 'Date', 'labourer_cost']   
+        fields = ['labour_type', 'NOL', 'Date', 'labourer_cost'] 
+        

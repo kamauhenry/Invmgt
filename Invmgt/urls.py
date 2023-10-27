@@ -29,6 +29,8 @@ urlpatterns = [
     path('labourers/', views.labourers_view, name='labourers_view'),
     path('return_item/<int:pk>', views.return_item_view, name='return_item_view'),
     path('delete_record/<int:pk>', views.delete_record, name='delete_record'),
+    path('update_labourer/<int:pk>', views.update_labourer, name='update_labourer'),
+    path('delete_labourer/<int:pk>', views.delete_labourer, name='delete_labourer'),
     path('grouped_items/', views.grouped_itemsv, name='grouped_items'),
     path('login/',
          LoginView.as_view
