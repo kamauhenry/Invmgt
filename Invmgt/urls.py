@@ -3,7 +3,7 @@ Definition of urls for Invmgt.
 """
 
 from datetime import datetime
-from django.urls import path
+from django.urls import path, include
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from app import forms, views
@@ -11,6 +11,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.db.models.query_utils import RegisterLookupMixin
 from django.contrib.auth import views as auth_view
+import debug_toolbar
+
 
 
 
@@ -20,7 +22,10 @@ from django.contrib.auth import views as auth_view
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('__debug__/', include(debug_toolbar.urls)),
     path('inventory/', views.inventory, name='inventory'),
+    path('setup/', views.setup, name='setup'),
+    path('Dashboard/', views.Dashboard, name='Dashboard'),
     path('add_record/', views.add_record, name='add_record'),
     path('add_custom_uom/', views.add_custom_uom, name='add_custom_uom'),
     path('person/', views.add_Person, name='add_Person'),

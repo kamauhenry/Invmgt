@@ -77,16 +77,19 @@ class GroupedItems(models.Model):
 	
 		
 		
-		self.units_available = self.total_units  - self.used_units
-	
-	def function(self):
+		self.units_available = F('total_units')  - F('used_units')
+		
+
 		sqlserverconn_aggregate = sqlserverconn.objects.filter(grouped_item=self).aggregate(
-			total_units=Sum('Units'),
-			total=Sum(F('Unit_cost') * F('Units'))
+			total_units = Sum('Units'),
+			total=Sum(F('subtotal'))
 		)
 		self.total_units = sqlserverconn_aggregate['total_units'] or 0
 		self.total = sqlserverconn_aggregate['total'] or 0
 	
+		
+	
+		
 		
 	def __str__(self):
 		return f"{self.grouped_item}"
@@ -131,9 +134,7 @@ class IssueItem(models.Model):
 	def __str__(self):
 		return str(self.person) 
 	
-
-
-
+	
 
 class Custom_UOM(models.Model):
 	UOM = models.CharField(max_length=20, primary_key=True)
@@ -143,6 +144,7 @@ class Custom_UOM(models.Model):
 	
 	def __str__(self):
 		return self.UOM
+
 
 
 class Labour(models.Model):
@@ -163,41 +165,38 @@ class Labour(models.Model):
 		self.sub_total = self.labourer_cost * self.NOL
 		super(Labour, self).save(*args, **kwargs)
 		
-		
-		
+
 
 @receiver(post_save, sender=sqlserverconn)
 def create_issue_item(sender, instance, **kwargs):
-	grouped_item, _ = GroupedItems.objects.get_or_create(grouped_item=instance.Item)
-	instance.grouped_item = grouped_item
-	if instance.pk is None:
-		grouped_item.save()
+	if sender == sqlserverconn:
+		grouped_item, _ = GroupedItems.objects.get_or_create(grouped_item=instance.Item)
+		instance.grouped_item = grouped_item
+		if instance.pk is None:
+			grouped_item.save()
 
 
 @receiver(post_save, sender=GroupedItems)
 def calculate_totals_for_grouped_items(sender, instance, **kwargs):
-	instance.calculate_totals()
-	instance.function()
+	if sender == GroupedItems:
+		instance.calculate_totals()
+	
 
 @receiver(post_save, sender=IssueItem)
 def calculate_totals_for_issue_items(sender, instance, **kwargs):
-	instance.grouped_item.calculate_totals()
+	if sender ==IssueItem:
+		instance.grouped_item.calculate_totals()
 	
 
 
 @receiver(post_save, sender=sqlserverconn)
 @receiver(post_save, sender=IssueItem)
 def calculate_totals(sender, instance, **kwargs):
-	grouped_item = instance.grouped_item
-	grouped_item.calculate_totals()
-	grouped_item.function()
-	grouped_item.save()
+	if sender ==sqlserverconn:
+		
+		instance.grouped_item.calculate_totals()
+		
+	if sender ==IssueItem:
+		instance.grouped_item.save()
 	
-@receiver(post_save, sender=sqlserverconn)
-def calculate_totals(sender, instance, **kwargs):
-	grouped_item = instance.grouped_item
-	grouped_item.calculate_totals()
-	grouped_item.function()
-	grouped_item.save()
-
 

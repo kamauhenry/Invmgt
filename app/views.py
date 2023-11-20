@@ -1,18 +1,22 @@
 """
 Definition of views.
 """
+from calendar import month
 from re import L
 from unittest import result
 from django.contrib.auth.decorators import login_required
 from os import system
 from datetime import datetime
+from django.core import paginator
 from django.shortcuts import render
 from django.http import HttpRequest, HttpRequest
+from numpy import datetime_as_string
 import pyodbc
 from app.forms import  *
 from django.contrib import messages
 from django.shortcuts import redirect, render, get_object_or_404
 from .models import *
+import plotly.express as px
 from django.contrib.auth import authenticate, login , logout 
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Sum, F, ExpressionWrapper, fields
@@ -20,7 +24,10 @@ from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
+from django.core.paginator import Page, Paginator
 from django.http import HttpResponseRedirect
+import pandas as pd 
+from django.db.models.functions import TruncMonth
 
 item_units_used = {}
 
@@ -44,9 +51,19 @@ def connsql(request):
 @login_required
 def home(request):
 	"""Renders the home page."""
-	sqlserverconns = sqlserverconn.objects.all()  
-	context = {'sqlserverconns': sqlserverconns}  
-
+	sqlserverconns = sqlserverconn.objects.order_by('-Date')  
+	 
+	paginator = Paginator(sqlserverconns, 15)
+	page_number = request.GET.get('page')
+	page_object = Paginator.get_page(paginator, page_number)
+	
+	total_records = len(sqlserverconns)
+	
+	context = {
+		'sqlserverconns': sqlserverconns,
+		'page_object' : page_object,
+		'total_records' : total_records
+		} 
 	assert isinstance(request, HttpRequest)
 	return render(
 		request,
@@ -104,8 +121,7 @@ def add_custom_uom(request):
 				return redirect('home')
 		return render(request, 'app/inventory.html', {'Custom_uom_form':Custom_uom_form})
 	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('app/inventory.html')
+		messages.success(request, "You Must Be Logged In...") 
 	
 
 def add_Person(request):
@@ -194,19 +210,84 @@ def loginView(request):
 	
 def labourers_view(request):
 	form = LabourForm(request.POST or None)
-	labourers = Labour.objects.all()
+	labourers = Labour.objects.order_by('-Date')
 	if request.method == 'POST' and form.is_valid():
 		labour = form.save()
 		
 		messages.success(request, "record added successfully !")
 		return redirect ('labourers_view')
 	total_amount= Labour.objects.aggregate(total_amount=Sum('sub_total'))['total_amount']
+	
+	paginator = Paginator(labourers, 8)
+	page_number = request.GET.get('page')
+	page_object1 = Paginator.get_page(paginator, page_number)
+	total_records = len(labourers)
 
-	return render(request,
+	return render ( request,
 		   'app/labourers.html',
 		   {'form': form,
 			'labourers': labourers,	
-			'total_amount': total_amount
+			'total_amount': total_amount,
+			'page_object1': page_object1,
+			'total_records': total_records
+	  })
+def Dashboard(request):
+	start = request.GET.get('start')
+	end = request.GET.get('end')
+	monthly_usage = (
+		sqlserverconn.objects.annotate(month=TruncMonth('Date'))
+		.values('month')
+		.annotate(total_usage=Sum('Subtotal'))
+		.order_by('month')
+	)
+	
+	
+	
+	
+	df = pd.DataFrame.from_records(monthly_usage)
+	if start:
+		monthly_usage=monthly_usage.filter(month__gte=start)
+	if end:
+		monthly_usage = monthly_usage.filter(month__lte=end)
+	
+	fig = px.line ( df,
+		x='month',
+		y='total_usage',
+		title = 'Total Sales per Month',
+		labels={'month': 'Month',
+				'total_usage':'Total Usage'}
+		)
+	
+	
+	fig.update_layout(
+		width=400, 
+		height=300 
+	)
+	chart = fig.to_html()
+
+	date_form = DateForm()
+
+	return render ( request,
+		   'app/Dashboard.html',
+		   {'chart':chart,
+			'form': date_form})
+
+
+def setup(request):
+	form = Custom_UOM_form(request.POST or None)
+
+	labourers = Labour.objects.order_by('-Date')
+	if request.method == 'POST' and form.is_valid():
+		labour = form.save()
+		
+		messages.success(request, "record added successfully !")
+		return redirect ('setup')
+	
+
+	return render ( request,
+		   'app/setup.html',
+		   {'form': form
+			
 	  })
 
 def delete_labourer(request, pk):
@@ -265,6 +346,10 @@ def grouped_itemsv(request):
 	for item in grouped_items:
 		records = sqlserverconn.objects.filter(Item=item['Item'])
 		records_by_item[item['Item']] = records
+		
+	paginator = Paginator(grouped_items, 8)
+	page_number = request.GET.get('page')
+	page_object2 = Paginator.get_page(paginator, page_number)
 
 	return render(request, 'app/grouped_items.html',  {
 		
@@ -272,6 +357,7 @@ def grouped_itemsv(request):
 		'search_query': search_query,
 		'records_by_item': records_by_item,
 		'total_amount': total_amount,
+		'page_object2' : page_object2
 	})
 
 
@@ -297,11 +383,16 @@ def issue_item_view(request):
 	else:
 		issue_item_form = IssueItemForm()
 		
-		return render(request, 'app/issue_item.html', {
-		'grouped_items': grouped_items,
+	paginator = Paginator(grouped_items, 8)
+	page_number = request.GET.get('page')
+	page_object3 = Paginator.get_page(paginator, page_number)
+	
+	return render(request, 'app/issue_item.html', {
+		
 		'issue_item_form': issue_item_form,
 		'search_query': search_query,  
 		'issue_items': issue_items,
+		'page_object3': page_object3
 	})
 
 

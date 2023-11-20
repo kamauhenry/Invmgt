@@ -50,7 +50,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in labourers|dictsortreversed:"Date" %}
+                    {% for item in page_object1|dictsortreversed:"Date" %}
                     <tr>
                         <td>{{ item.labour_type }}</td>
                         <td>{{ item.NOL }}</td>
@@ -63,9 +63,31 @@
                         </td>
                     </tr>
 
+
+
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="pagination-container">
+
+                Showing page {{ page_object1.number }} of {{ page_object1.paginator.num_pages }}
+            </div>
+            <li class=" text"> Total records {{total_records}}</li>
+            <ul class="pagination align-right float-right mr-auto">
+                {% if page_object1.has_previous %}
+                <li {% if page_object1.number == 1 %} class="page-item active" {% endif %}>
+                    <a class="page-link" href="?page=1">&laquo; 1</a>
+                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_object1.previous_page_number }}">Previous</a></li>
+                {% endif %}
+
+                {% if page_object1.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_object1.next_page_number }}">Next Page </a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_object1.paginator.num_pages }}">{{ page_object1.paginator.num_pages }} &raquo;</a></li>
+                {% endif %}
+
+            </ul>
+
         </div>
     </div>
 </div>

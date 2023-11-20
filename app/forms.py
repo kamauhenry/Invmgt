@@ -120,9 +120,6 @@ class IssueItemForm(forms.ModelForm):
         super(IssueItemForm, self).__init__(*args, **kwargs)
         self.fields['grouped_item'].queryset = GroupedItems.objects.all()
 
-   #
-
-#
         
 class Custom_UOM_form(forms.ModelForm):
     UOM = forms.CharField(
@@ -157,4 +154,9 @@ class LabourForm(forms.ModelForm):
     class Meta:
         model = Labour
         fields = ['labour_type', 'NOL', 'Date', 'labourer_cost'] 
-        
+
+class DateForm(forms.Form):
+    start = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}))
+    end = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}))
