@@ -16,11 +16,11 @@ class sqlserverconn(models.Model):
 	Item_id = models.BigAutoField(primary_key=True, db_column='Item_id' )
 	Item = models.CharField(max_length=30, db_index=True , db_column='Item')
 	Item_Description = models.CharField(max_length=30, null=True, blank=True)
-	Units = models.FloatField(default=0)
+	Units =models.DecimalField(max_digits=15, decimal_places=4, default=0)
 	Unit_of_measurement = models.CharField(max_length=15, null=True , blank=True )
-	Unit_cost = models.FloatField()
+	Unit_cost =models.DecimalField(max_digits=15, decimal_places=4, default=0)
 	Date = models.DateField()
-	Subtotal = models.FloatField(default=0)
+	Subtotal = models.DecimalField(max_digits=15, decimal_places=4, default=0)
 	grouped_item = models.ForeignKey(
 		'GroupedItems', 
 		on_delete=models.CASCADE,
@@ -40,7 +40,8 @@ class sqlserverconn(models.Model):
 		self.Subtotal = self.Unit_cost * self.Units
 	
 		super().save(*args, **kwargs)
-
+		
+		self.grouped_item.calculate_totals()
 	class Meta:
 		indexes = [
 			models.Index(fields=['Item'], name='item_idx'),
@@ -61,10 +62,10 @@ def create_grouped_item(sender, instance, **kwargs):
 class GroupedItems(models.Model):
 	id = models.BigAutoField(primary_key=True)
 	grouped_item = models.CharField(max_length=30, unique=True)
-	total_units = models.DecimalField(max_digits=9, decimal_places=2, default=0)
-	total = models.PositiveIntegerField(default=0)
-	used_units = models.DecimalField(max_digits=8, decimal_places=2, default=0)
-	units_available = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+	total_units = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+	total = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+	used_units = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+	units_available = models.DecimalField(max_digits=15, decimal_places=4, default=0)
 	
 		
 		
@@ -118,9 +119,9 @@ class IssueItem(models.Model):
 		on_delete=models.CASCADE,
 		related_name='issue_items'
 	)
-	units_issued = models.DecimalField(max_digits=7, decimal_places=2, default=0)
-	units_returned = models.DecimalField(max_digits=7, decimal_places=2, default=0)
-	units_used = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+	units_issued = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+	units_returned = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+	units_used = models.DecimalField(max_digits=15, decimal_places=4, default=0)
 	Date = models.DateField(default=timezone.now)
 	
 
@@ -153,8 +154,8 @@ class Labour(models.Model):
 	NOL = models.PositiveIntegerField()
 	Date = models.DateField(default=timezone.now)
 	#NOL = number of labourers
-	labourer_cost = models.FloatField()
-	sub_total = models.FloatField(default=0)
+	labourer_cost = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+	sub_total = models.DecimalField(max_digits=15, decimal_places=4, default=0)
 	
 	
 
