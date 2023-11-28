@@ -24,9 +24,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '7eebbb5e-b526-4b8f-9bb5-95f7ee5e35a7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['192.168.100.248']
+ALLOWED_HOSTS = ['192.168.100.28']
 INTERNAL_IPS = ['127.0.0.1',
                 ]
 
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'pyodbc',
     'debug_toolbar',
+    'rest_framework',
    
 ]
 

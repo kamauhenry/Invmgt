@@ -22,12 +22,13 @@ import debug_toolbar
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('__debug__/', include(debug_toolbar.urls)),
+    
+    
     path('inventory/', views.inventory, name='inventory'),
     path('setup/', views.setup, name='setup'),
     path('Dashboard/', views.Dashboard, name='Dashboard'),
     path('add_record/', views.add_record, name='add_record'),
-    path('add_custom_uom/', views.add_custom_uom, name='add_custom_uom'),
+    path('CustomUOM/', views.add_custom_uom, name='add_custom_uom'),
     path('person/', views.add_Person, name='add_Person'),
     path('update_record/<int:pk>', views.update_record, name='update_record'),
     path('issue_item/', views.issue_item_view, name='issue_item_view'),
@@ -56,10 +57,14 @@ urlpatterns = [
     path('groupedi_pdf/', views.groupedi_pdf, name='groupedi_pdf'),
     path('issuei_pdf/', views.issuei_pdf, name='issuei_pdf'),
     
-    
+    path('app/',include('app.urls')),
 
     
 
 ]
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
+    
+urlpatterns += [
+    path('__debug__/', include(debug_toolbar.urls)),
+]

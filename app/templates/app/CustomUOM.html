@@ -1,0 +1,14 @@
+{% extends 'app/layout.html' %}
+
+{% block content %}
+
+<div class="col-md-6">
+    <form id="customUOMForm" method="POST" action="{% url 'add_custom_uom' %}">
+        {% csrf_token %}
+
+        {{ Custom_uom_form.as_p }}
+        <button type="submit" class="btn btn-primary">Add Custom UOM</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -18,14 +18,7 @@
                         <a href="{% url 'home' %}" class="btn btn-secondary">Back</a>
                     </form>
                 </div>
-                <div class="col-md-6">
-                    <form id="customUOMForm" method="POST" action="{% url 'add_custom_uom' %}">
-                        {% csrf_token %}
-
-                        {{ Custom_uom_form.as_p }}
-                        <button type="submit" class="btn btn-primary">Add Custom UOM</button>
-                    </form>
-                </div>
+             
             </div>
         </div>
     </div>

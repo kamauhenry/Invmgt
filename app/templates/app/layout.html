@@ -34,9 +34,9 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto" style="list-style:none;">
                 {% if user.is_authenticated %}
-                <li class="nav-item ">
+               <!-- <li class="nav-item ">
                     <a class="nav-link" href="{% url 'Dashboard' %}">Dashboard <span class="sr-only">(current)</span></a>
-                </li>
+                </li> -->
                 <li class="nav-item ">
                     <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
                 </li>
@@ -61,6 +61,8 @@
                     </a>
                     <div class="dropdown-menu" aria-labelledby="userDropdown">
                         <a class="dropdown-item" href="{% url 'reg_user' %}" style="color: #000; background-color: #fff;">Register User</a>
+                        <br/>
+                        <a class="dropdown-item" href="{% url 'add_custom_uom' %}" style="color: #000; background-color: #fff;">add Custom Unit of Measurement </a>
                     </div>
                 </li>
 

@@ -122,7 +122,7 @@ class IssueItemForm(forms.ModelForm):
 
         
 class Custom_UOM_form(forms.ModelForm):
-    UOM = forms.CharField(
+    UOM  = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )

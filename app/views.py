@@ -28,6 +28,8 @@ from django.core.paginator import Page, Paginator
 from django.http import HttpResponseRedirect
 import pandas as pd 
 from django.db.models.functions import TruncMonth
+from rest_framework import viewsets
+from app.serializers import *
 
 item_units_used = {}
 
@@ -118,8 +120,8 @@ def add_custom_uom(request):
 				messages.success(request, "Record Added...")
 				
 
-				return redirect('home')
-		return render(request, 'app/inventory.html', {'Custom_uom_form':Custom_uom_form})
+				return redirect('app/inventory.html')
+		return render(request, 'app/CustomUOM.html', {'Custom_uom_form':Custom_uom_form})
 	else:
 		messages.success(request, "You Must Be Logged In...") 
 	
@@ -231,46 +233,6 @@ def labourers_view(request):
 			'page_object1': page_object1,
 			'total_records': total_records
 	  })
-def Dashboard(request):
-	start = request.GET.get('start')
-	end = request.GET.get('end')
-	monthly_usage = (
-		sqlserverconn.objects.annotate(month=TruncMonth('Date'))
-		.values('month')
-		.annotate(total_usage=Sum('Subtotal'))
-		.order_by('month')
-	)
-	
-	
-	
-	
-	df = pd.DataFrame.from_records(monthly_usage)
-	if start:
-		monthly_usage=monthly_usage.filter(month__gte=start)
-	if end:
-		monthly_usage = monthly_usage.filter(month__lte=end)
-	
-	fig = px.line ( df,
-		x='month',
-		y='total_usage',
-		title = 'Total Sales per Month',
-		labels={'month': 'Month',
-				'total_usage':'Total Usage'}
-		)
-	
-	
-	fig.update_layout(
-		width=400, 
-		height=300 
-	)
-	chart = fig.to_html()
-
-	date_form = DateForm()
-
-	return render ( request,
-		   'app/Dashboard.html',
-		   {'chart':chart,
-			'form': date_form})
 
 
 def setup(request):
@@ -403,6 +365,50 @@ def loginpartial(request):
 		messages.success(request, 'You have been logged out')
 	return HttpResponseRedirect('/login')
 
+def Dashboard(request):
+
+
+
+
+	start = request.GET.get('start')
+	end = request.GET.get('end')
+	monthly_usage = (
+		sqlserverconn.objects.annotate(month=TruncMonth('Date'))
+		.values('month')
+		.annotate(total_usage=Sum('Subtotal'))
+		.order_by('month')
+	)
+	
+	
+	
+	
+	df = pd.DataFrame.from_records(monthly_usage)
+	if start:
+		monthly_usage=monthly_usage.filter(month__gte=start)
+	if end:
+		monthly_usage = monthly_usage.filter(month__lte=end)
+	
+	fig = px.line ( df,
+		x='month',
+		y='total_usage',
+		title = 'Total Sales per Month',
+		labels={'month': 'Month',
+				'total_usage':'Total Usage'}
+		)
+	
+	
+	fig.update_layout(
+		width=400, 
+		height=300 
+	)
+	chart = fig.to_html()
+
+	date_form = DateForm()
+
+	return render ( request,
+		   'app/Dashboard.html',
+		   {'chart':chart,
+			'form': date_form})
 
 
 def reports_pdf(request):
@@ -549,25 +555,34 @@ def issuei_pdf(request):
 	
 
 
+class SqlServerConnViewSet(viewsets.ModelViewSet):
+	queryset = sqlserverconn.objects.all()
+	serializer_class = SqlServerConnSerializer
 	
-#def combined_monthly_expenditure(request):
-	# Monthly item expenditure
-#	monthly_item_expenditure = sqlserverconn.objects.annotate(
-#		month=TruncMonth('Date')
-#	).values('month').annotate(
-#		total_expenditure=Sum('Subtotal')
-#	).order_by('month')
 
-	# Monthly grouped expenditure
-#	monthly_grouped_expenditure = GroupedItems.objects.annotate(
-#		month=TruncMonth('issue_items__Date')
-#	).values('grouped_item', 'month').annotate(
-#		total_expenditure=Sum('issue_items__units_used')
-#	).order_by('grouped_item', 'month')
+class GroupedItemsViewSet(viewsets.ModelViewSet):
+	queryset = GroupedItems.objects.all()
+	serializer_class = GroupedItemSerializer
+	
 
-#	return render
-#(#request, 'combined_monthly_expenditure.html', {
-	#	'monthly_item_expenditure': monthly_item_expenditure,
-	#	'monthly_grouped_expenditure': monthly_grouped_expenditure,
-	#})
+class IssueItemViewSet(viewsets.ModelViewSet):
+	queryset = IssueItem.objects.all()
+	serializer_class = IssueItemSerializer
+	
 
+class CustomUOMViewSet(viewsets.ModelViewSet):
+	queryset = Custom_UOM.objects.all()
+	serializer_class = Custom_UOMSerializer
+
+class LabourViewSet(viewsets.ModelViewSet):
+	queryset = Labour.objects.all()
+	serializer_class = LabourSerializer
+	
+class LabourViewSet(viewsets.ModelViewSet):
+	queryset = Labour.objects.all()
+	serializer_class = LabourSerializer
+	
+class PersonSet(viewsets.ModelViewSet):
+	queryset = Person.objects.all()
+	serializer_class = personSerializer
+	
