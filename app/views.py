@@ -1,8 +1,8 @@
-"""
-Definition of views.
-"""
+import json
 from calendar import month
 from re import L
+import openpyxl
+from django.core.serializers.json import DjangoJSONEncoder
 from unittest import result
 from django.contrib.auth.decorators import login_required
 from os import system
@@ -17,6 +17,9 @@ from django.contrib import messages
 from django.shortcuts import redirect, render, get_object_or_404
 from .models import *
 import plotly.express as px
+import pandas as pd 
+import plotly
+import plotly.io as pio
 from django.contrib.auth import authenticate, login , logout 
 from django.views.decorators.csrf import csrf_protect
 from django.db.models import Sum, F, ExpressionWrapper, fields
@@ -26,10 +29,15 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 from django.core.paginator import Page, Paginator
 from django.http import HttpResponseRedirect
-import pandas as pd 
+  
 from django.db.models.functions import TruncMonth
 from rest_framework import viewsets
 from app.serializers import *
+from django.http import JsonResponse
+
+
+
+
 
 item_units_used = {}
 
@@ -68,8 +76,7 @@ def home(request):
 		} 
 	assert isinstance(request, HttpRequest)
 	return render(
-		request,
-		'app/index.html',
+		request,		'app/index.html',
 		{
 			'title': 'Home Page',
 			'year': datetime.now().year,
@@ -365,50 +372,44 @@ def loginpartial(request):
 		messages.success(request, 'You have been logged out')
 	return HttpResponseRedirect('/login')
 
+
+
 def Dashboard(request):
-
-
-
-
 	start = request.GET.get('start')
 	end = request.GET.get('end')
+	grouped_items = GroupedItems.objects.all()
+	labour_total= Labour.objects.aggregate(total_amount=Sum('sub_total'))['total_amount']
+	
+	invt_total = sqlserverconn.objects.aggregate(invt_total=Sum('Subtotal'))['invt_total']
 	monthly_usage = (
 		sqlserverconn.objects.annotate(month=TruncMonth('Date'))
 		.values('month')
 		.annotate(total_usage=Sum('Subtotal'))
 		.order_by('month')
 	)
-	
-	
-	
-	
-	df = pd.DataFrame.from_records(monthly_usage)
-	if start:
-		monthly_usage=monthly_usage.filter(month__gte=start)
-	if end:
-		monthly_usage = monthly_usage.filter(month__lte=end)
-	
-	fig = px.line ( df,
-		x='month',
-		y='total_usage',
-		title = 'Total Sales per Month',
-		labels={'month': 'Month',
-				'total_usage':'Total Usage'}
-		)
-	
-	
-	fig.update_layout(
-		width=400, 
-		height=300 
-	)
-	chart = fig.to_html()
+	itemperc = {
+	'labels': [item.grouped_item for item in grouped_items],
+	'data': [item.total_units for item in grouped_items],
+}
+	itemperc_json = json.dumps(itemperc, cls=DjangoJSONEncoder)
+	data = {
+		'labels': [item['month'].strftime('%Y-%m-%d') for item in monthly_usage],
+		'series': [{
+			'name': 'Total Usage',
+			'data': [item['total_usage'] for item in monthly_usage],
+		}],
+	}
 
-	date_form = DateForm()
+	# Convert the dates to string representations
+	data_json = json.dumps(data, cls=DjangoJSONEncoder)
 
-	return render ( request,
-		   'app/Dashboard.html',
-		   {'chart':chart,
-			'form': date_form})
+	return render(request, 'app/Dashboard.html', {
+		'chart_data': data_json,
+		'labour_total': labour_total,
+		'invt_total': invt_total,
+		'data': itemperc_json,
+	})
+
 
 
 def reports_pdf(request):
@@ -460,53 +461,42 @@ def reports_pdf(request):
 	
 
 
+from django.http import HttpResponse
+
 def groupedi_pdf(request):
 	try:
-		
-		response = HttpResponse(content_type='application/pdf')
-		response['Content-Disposition'] = 'attachment; filename="Inventory.pdf"'
+		# Create a new workbook and add a worksheet
+		workbook = openpyxl.Workbook()
+		worksheet = workbook.active
 
-		doc = SimpleDocTemplate(response, pagesize=letter)
-		data = []
+		# Write header row
+		header = ['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total']
+		worksheet.append(header)
 
-	
+		# Add data to the worksheet
 		items = GroupedItems.objects.all()
-
-		# Define the table data as a list of lists
-		data.append(['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total'])
-
 		for item in items:
-			data.append([item.grouped_item, item.total_units, item.units_used, item.units_available, item.total])
+			row_data = [item.grouped_item, item.total_units, item.units_used, item.units_available, item.total]
+			worksheet.append(row_data)
 
-		# Create a table with the data
-		table = Table(data)
+		# Set column widths (optional)
+		for col_num, value in enumerate(header, 1):
+			col_letter = openpyxl.utils.get_column_letter(col_num)
+			worksheet.column_dimensions[col_letter].width = max(len(str(value)) + 2, 15)
 
-		# Define style for the table
-		style = TableStyle([
-			('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-			('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-			('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-			('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-			('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-			('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-			('GRID', (0, 0), (-1, -1), 1, colors.black)
-		])
+		# Create a response with appropriate headers for Excel file
+		response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+		response['Content-Disposition'] = 'attachment; filename="Inventory.xlsx"'
 
-		table.setStyle(style)
+		# Save the workbook to the response
+		workbook.save(response)
 
-		# Add the table to the PDF
-		elements = [table]
+		return response
 
-		doc.build(elements)
-
-		return response  # Return the HttpResponse
-	 
 	except Exception as e:
 		# Handle exceptions here, e.g., log the error
 		# You can also return an error HttpResponse if needed
-		
 		return HttpResponse("Internal Server Error", status=500)
-	
 
 def issuei_pdf(request):
 	try:

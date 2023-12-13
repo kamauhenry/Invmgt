@@ -341,9 +341,13 @@ window.matchMedia = window.matchMedia || (function(doc, undefined){
 
 
 $.ajax({
-	url: 'your_url',
+	url: '/Dashboard/',
 	type: 'POST',
-	data: your_data,
+	data: {
+		csrfmiddlewaretoken: getCookie('csrftoken'),  // Replace with your cookie retrieval function
+		chart_data: chartData,
+		pdata : PieData,
+	},
 	headers: {
 		'X-CSRFToken': getCookie('csrftoken')  // Replace with your cookie retrieval function
 	},

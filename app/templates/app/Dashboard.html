@@ -1,24 +1,85 @@
 {% extends 'app/layout.html' %}
+{% load humanize %}
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard - Dark Style</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+</head>
+{% load static %}
 
 {% block content %}
 
+
 {% if user.is_authenticated %}
 
-<form method="GET" action="{%url 'Dashboard'%}">
-    {{ form.as_p}}
+<body >
+    <div id="wrapper">
+        <div class="content-area">
+            <div class="container-fluid">
+                <div class="main">
+                    <div class="row sparkboxes mt-4">
+                        <div class="col-md-4">
+                            <div class="box box1">
+                                <h1><strong>{{ labour_total|floatformat:"2"|intcomma }} Ksh </strong></h1>
+                                <h2 style="font-weight: bold;">Labour Total</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="box box2">
+                                <h1><strong>{{ invt_total|floatformat:"2"|intcomma }} Ksh </strong></h1>
+                                <h2 style="font-weight: bold;">Inventory Total</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="box box3">
+                                <h1><strong>{{ labour_total|floatformat:"2"|intcomma }} Ksh </strong></h1>
+                                <h2 style="font-weight: bold;">Labour Total</h2>
+                            </div>
+                        </div>
+                        
+                    </div>
 
-    <button> Submit </button>
-</form>
+                    
+                    <br>
+
+                    <div class="row mt-4">
+                        <div class="col-md-5">
+                            <div class="box shadow mt-4">
+                                <canvas id="piechart"> 
+                                       
+                                </canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="chart">
+                                <div class="box shadow mt-4">
+                                   <canvas id="barchart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    var chartData = {{ chart_data|safe }};
+    var PieData = {{ data|safe}}
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
+    <script src="{% static 'app/scripts/Dashboard.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+</body>
 
 
 
-<div id="monthly-usage-chart">{{ chart|safe }}</div>
-
-
-
-
-{% endif%}
-
+{% endif %}
 
 {% endblock %}
-      

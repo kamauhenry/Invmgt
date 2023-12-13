@@ -83,7 +83,7 @@ class GroupedItems(models.Model):
 
 		sqlserverconn_aggregate = sqlserverconn.objects.filter(grouped_item=self).aggregate(
 			total_units = Sum('Units'),
-			total=Sum(F('subtotal'))
+			total=Sum(F('Subtotal'))
 		)
 		self.total_units = sqlserverconn_aggregate['total_units'] or 0
 		self.total = sqlserverconn_aggregate['total'] or 0
@@ -165,7 +165,11 @@ class Labour(models.Model):
 	def save(self, *args, **kwargs):
 		self.sub_total = self.labourer_cost * self.NOL
 		super(Labour, self).save(*args, **kwargs)
-		
+
+@receiver(post_save, sender=IssueItem)
+@receiver(post_save, sender=sqlserverconn)
+def update_totals_on_related_save(sender, instance, **kwargs):
+	instance.grouped_item.calculate_totals()
 
 
 @receiver(post_save, sender=sqlserverconn)

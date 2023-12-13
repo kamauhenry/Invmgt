@@ -73,6 +73,8 @@
     <Folder Include="Invmgt\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="app\static\app\content\Dashboard.css" />
+    <Content Include="app\static\app\scripts\Dashboard.js" />
     <Content Include="app\templates\app\CustomUOM.html" />
     <Content Include="app\templates\app\Dashboard.html" />
     <Content Include="app\templates\app\issue_item.html" />
