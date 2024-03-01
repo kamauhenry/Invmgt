@@ -35,10 +35,16 @@
     <Compile Include="app\admin.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\custom_tenants.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\custom_widgets.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="app\forms.py" />
+    <Compile Include="app\middlewares.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\models.py" />
     <Compile Include="app\serializers.py">
       <SubType>Code</SubType>
@@ -52,7 +58,6 @@
     </Compile>
     <Compile Include="app\views.py" />
     <Compile Include="app\__init__.py" />
-    <Compile Include="app\migrations\__init__.py" />
     <Compile Include="manage.py" />
     <Compile Include="Invmgt\__init__.py" />
     <Compile Include="Invmgt\settings.py" />

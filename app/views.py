@@ -16,9 +16,12 @@ from app.forms import  *
 from django.contrib import messages
 from django.shortcuts import redirect, render, get_object_or_404
 from .models import *
+from openpyxl.styles import Font, Alignment
+from io import BytesIO
 import plotly.express as px
 import pandas as pd 
 import plotly
+from django.shortcuts import render, redirect
 import plotly.io as pio
 from django.contrib.auth import authenticate, login , logout 
 from django.views.decorators.csrf import csrf_protect
@@ -29,94 +32,125 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 from django.core.paginator import Page, Paginator
 from django.http import HttpResponseRedirect
-  
+import logging
 from django.db.models.functions import TruncMonth
 from rest_framework import viewsets
 from app.serializers import *
 from django.http import JsonResponse
-
-
+from django.http import HttpResponse
+from .custom_tenants import get_current_tenant
 
 
 
 item_units_used = {}
 
-def connsql(request):
-	conn=pyodbc.connect('Driver={ODBC Driver 18 for SQL Server};'
-					  'Server=JAYDEN;'
-					  'Database=fpwdb;'
-					  'UID=sa;'
-					  'PWD=yrenhke;'
-					  'Trusted_Connnection=yes;'
-					  'encrypt=no;'  
-					  )
-	cursor=conn.cursor()
-	cursor.execute()
-	result=cursor.fetchall()
-	print(result)
-	return render(request,'index.html',{'sqlserverconn':result})
+#def connsql(request):
+#	conn=pyodbc.connect('Driver={ODBC Driver 18 for SQL Server};'
+#					  'Server=JAYDEN;'
+#					  'Database=fpwdb;'
+#					  'UID=sa;'
+#					  'PWD=yrenhke;'
+#					  'Trusted_Connnection=yes;'
+#					  'encrypt=no;'  
+#					  )
+#	cursor=conn.cursor()
+#	cursor.execute()
+#	result=cursor.fetchall()
+#	print(result)
+#	return render(request,'index.html',{'sqlserverconn':result})
+
+
 
 
 
 @login_required
 def home(request):
-	"""Renders the home page."""
-	sqlserverconns = sqlserverconn.objects.order_by('-Date')  
-	 
-	paginator = Paginator(sqlserverconns, 15)
-	page_number = request.GET.get('page')
-	page_object = Paginator.get_page(paginator, page_number)
-	
-	total_records = len(sqlserverconns)
-	
-	context = {
-		'sqlserverconns': sqlserverconns,
-		'page_object' : page_object,
-		'total_records' : total_records
-		} 
-	assert isinstance(request, HttpRequest)
-	return render(
-		request,		'app/index.html',
-		{
-			'title': 'Home Page',
-			'year': datetime.now().year,
-			**context 
-		}
-	)
+    """Renders the home page."""
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+
+    # Filter records based on the current user's tenant
+    sqlserverconns = sqlserverconn.objects.filter(tenant=tenant).order_by('-Date')
+
+    paginator = Paginator(sqlserverconns, 15)
+    page_number = request.GET.get('page')
+    page_object = paginator.get_page(page_number)
+
+    total_records = len(sqlserverconns)
+
+    context = {
+        'sqlserverconns': sqlserverconns,
+        'page_object': page_object,
+        'total_records': total_records
+    }
+
+    assert isinstance(request, HttpRequest)
+    return render(
+        request,
+        'app/index.html',
+        {
+            'title': 'Home Page',
+            'year': datetime.now().year,
+            **context
+        }
+    )
 
 @login_required
 def return_item_view(request, pk):
-	record = IssueItem.objects.get( id = pk )
-	return_form = IssueItemForm(request.POST or None, instance = record)
-	
-	if request.method == 'POST':
-		if return_form.is_valid():
-			return_form.save()
-			messages.success(request, "Record Has Been Updated! ")
-			return redirect('issue_item')
-		
-	return render(request, 'app/return_item.html', {'return_form': return_form})
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+    
+    # Make sure the IssueItem belongs to the current user's tenant
+    record = get_object_or_404(IssueItem, id=pk, tenant=tenant)
+    return_form = IssueItemForm(request.POST or None, instance = record)
+    if request.method == 'POST':
+        if return_form.is_valid():
+            return_form.save()
+            messages.success(request, "Record Has Been Updated! ")
+            return redirect('issue_item')
+        
+    return render(request, 'app/return_item.html', {'return_form': return_form})
 
 
 
 
+#modified
 @login_required
 def inventory(request):
-	"""Renders the contact page."""
-	form = SqlServerConnForm(request.POST or None, request.FILES or None)
-	Custom_uom_form = Custom_UOM_form(request.POST or None, request.FILES or None)
-	assert isinstance(request, HttpRequest)
-	return render(
-		request,
-		'app/inventory.html',
-		{
-			'title':'Contact',
-			'message':'Your contact page.',
-			'year':datetime.now().year,
-			'form': form,
-			'Custom_uom_form': Custom_uom_form
-		}
-	)
+    """Renders the contact page."""
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+    
+    form = SqlServerConnForm(request.POST or None, request.FILES or None, initial={'tenant': tenant})
+    Custom_uom_form = Custom_UOM_form(request.POST or None, request.FILES or None, initial={'tenant': tenant})
+    
+    if request.method == 'POST':
+        if form.is_valid():
+            form_instance = form.save(commit=False)
+            form_instance.tenant = tenant
+            form_instance.save()
+    
+    assert isinstance(request, HttpRequest)
+    return render(
+        request,
+        'app/inventory.html',
+        {
+            'title': 'Contact',
+            'message': 'Your contact page.',
+            'year': datetime.now().year,
+            'form': form,
+            'Custom_uom_form': Custom_uom_form
+        }
+    )
 
 def add_custom_uom(request):
 	Custom_uom_form = Custom_UOM_form(request.POST or None)
@@ -127,61 +161,94 @@ def add_custom_uom(request):
 				messages.success(request, "Record Added...")
 				
 
-				return redirect('app/inventory.html')
+				return redirect('inventory')
 		return render(request, 'app/CustomUOM.html', {'Custom_uom_form':Custom_uom_form})
 	else:
 		messages.success(request, "You Must Be Logged In...") 
 	
-
-def add_Person(request):
-	
-
-	people = Person.objects.all()
-	Person_form = Personform(request.POST or None)
-	if request.user.is_authenticated:
-		if request.method == "POST":
-			if Person_form.is_valid():
-				add_Person = Person_form.save()
-				messages.success(request, "Record Added...")
-				
-
-				return redirect('issue_item_view')
-		return render(request, 'app/person.html', {
-			'Person_form':Person_form,
-			'people':people	}
-				)
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('issue_item_view')
-
+# modified
 def add_record(request):
-	form = SqlServerConnForm(request.POST or None)
-	if request.user.is_authenticated:
-		if request.method == "POST":
-			if form.is_valid():
-				add_record = form.save()
-				messages.success(request, "Record Added...")
-				
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
 
-				return redirect('home')
-		return render(request, 'inventory.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('home')
+    if request.user.is_authenticated:
+        form = SqlServerConnForm(request.POST or None, initial={'tenant': tenant})
+
+        if request.method == "POST":
+            form = SqlServerConnForm(request.POST)
+            if form.is_valid():
+                record_instance = form.save(commit=False)
+                record_instance.tenant = tenant
+                record_instance.save()
+                messages.success(request, "Record Added...")
+                return redirect('home')
+
+        return render(request, 'inventory.html', {'form': form})
+    else:
+        messages.success(request, "You Must Be Logged In...")
+        return redirect('home')
+		
+#modified
+def add_Person(request):
+    # Each tenant to have its own view
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+
+    people = Person.objects.filter(tenant=tenant)
+    Person_form = Personform(request.POST or None)
+    
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            Person_form = Personform(request.POST)
+            if Person_form.is_valid():
+                person_instance = Person_form.save(commit=False)
+                person_instance.tenant = tenant
+                person_instance.save()
+                messages.success(request, "Record Added...")
+                return redirect('issue_item_view')
+        
+        return render(request, 'app/person.html', {
+            'Person_form': Person_form,
+            'people': people
+        })
+    else:
+        messages.success(request, "You Must Be Logged In...")
+        return redirect('issue_item_view')
 	
+
+
+	
+#modified
 @login_required
 def update_record(request, pk):
-	if request.user.is_authenticated:
-		current_record = sqlserverconn.objects.get(Item_id=pk)
-		form = SqlServerConnForm(request.POST or None, instance=current_record)
-		if form.is_valid():
-			form.save()
-			messages.success(request, "Record Has Been Updated!")
-			return redirect('home')
-		return render(request, 'app/update_record.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('home')
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+
+    current_record = get_object_or_404(sqlserverconn, tenant=tenant, Item_id=pk)
+    
+    form = SqlServerConnForm(request.POST or None, instance=current_record, initial={'tenant': tenant})
+
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            form = SqlServerConnForm(request.POST, instance=current_record)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Record Has Been Updated!")
+                return redirect('home')
+
+        return render(request, 'app/update_record.html', {'form': form})
+    else:
+        messages.success(request, "You Must Be Logged In...")
+        return redirect('home')
 	
 def delete_record(request, pk):
 	if request.user.is_authenticated:
@@ -201,7 +268,7 @@ def delete_record(request, pk):
 
 
 	
-def loginView(request):
+def LoginView(request):
 	if request.method =='POST':
 		username = request.POST['username']
 		password = request.POST['password']
@@ -210,36 +277,46 @@ def loginView(request):
 		if user is not None:
 			login(request, user)
 			messages.success(request,"You Have Been Logged in")
-			return redirect('home')
+			return redirect('Dashboard')
 		else:
 			messages.success(request, "Error")
-			return redirect('home')
+			print("Successful login, redirecting to Dashboard")
+			return redirect('Dashboard')
 	else:
-		return render(request, 'index.html')
-	
-def labourers_view(request):
-	form = LabourForm(request.POST or None)
-	labourers = Labour.objects.order_by('-Date')
-	if request.method == 'POST' and form.is_valid():
-		labour = form.save()
-		
-		messages.success(request, "record added successfully !")
-		return redirect ('labourers_view')
-	total_amount= Labour.objects.aggregate(total_amount=Sum('sub_total'))['total_amount']
-	
-	paginator = Paginator(labourers, 8)
-	page_number = request.GET.get('page')
-	page_object1 = Paginator.get_page(paginator, page_number)
-	total_records = len(labourers)
+		return render(request, 'Dashboard.html')
 
-	return render ( request,
-		   'app/labourers.html',
-		   {'form': form,
-			'labourers': labourers,	
-			'total_amount': total_amount,
-			'page_object1': page_object1,
-			'total_records': total_records
-	  })
+	
+#modified
+@login_required
+def labourers_view(request):
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login') 
+
+    form = LabourForm(request.POST or None, initial={'tenant': tenant})
+    labourers = Labour.objects.filter(tenant=tenant).order_by('-Date')
+
+    if request.method == 'POST' and form.is_valid():
+        labour = form.save()
+        messages.success(request, "Record added successfully!")
+        return redirect('labourers_view')
+
+    total_amount = Labour.objects.filter(tenant=tenant).aggregate(total_amount=Sum('sub_total'))['total_amount']
+
+    paginator = Paginator(labourers, 8)
+    page_number = request.GET.get('page')
+    page_object1 = Paginator.get_page(paginator, page_number)
+    total_records = len(labourers)
+
+    return render(request, 'app/labourers.html', {
+        'form': form,
+        'labourers': labourers,
+        'total_amount': total_amount,
+        'page_object1': page_object1,
+        'total_records': total_records
+    })
 
 
 def setup(request):
@@ -259,32 +336,50 @@ def setup(request):
 			
 	  })
 
+
+#modified
+@login_required
 def delete_labourer(request, pk):
-	if request.user.is_authenticated:
-		try:
-			delete_it = Labour.objects.get(id=pk)
-			delete_it.delete()
-			messages.success(request, 'Record deleted')
-		except Labour.DoesNotExist:
-			messages.error(request, 'Record not found')
-		
-		return redirect('labourers_view')
-	else:
-		messages.success(request, 'You must be logged in')
-		return redirect('labourers_view')
-	
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+
+    if request.user.is_authenticated:
+        try:
+            delete_it = Labour.objects.get(id=pk, tenant=tenant)
+            delete_it.delete()
+            messages.success(request, 'Record deleted')
+        except Labour.DoesNotExist:
+            messages.error(request, 'Record not found')
+
+        return redirect('labourers_view')
+    else:
+        messages.success(request, 'You must be logged in')
+        return redirect('labourers_view')
+
+
+#modified    
+@login_required
 def update_labourer(request, pk):
-	if request.user.is_authenticated:
-		current_record = Labour.objects.get(id=pk)
-		form = LabourForm(request.POST or None, instance=current_record)
-		if form.is_valid():
-			form.save()
-			messages.success(request, "Record Has Been Updated!")
-			return redirect('labourers_view')
-		return render(request, 'app/update_labourer.html', {'form':form})
-	else:
-		messages.success(request, "You Must Be Logged In...")
-		return redirect('labourers_view')
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
+
+    if request.user.is_authenticated:
+        current_record = Labour.objects.get(id=pk, tenant=tenant)
+        form = LabourForm(request.POST or None, instance=current_record)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Record Has Been Updated!")
+            return redirect('labourers_view')
+        return render(request, 'app/update_labourer.html', {'form': form})
+    else:
+        messages.success(request, "You Must Be Logged In...")
+        return redirect('labourers_view')
 
 def register_user(request):
 	form = SignUpForm(request.POST or None)
@@ -296,73 +391,89 @@ def register_user(request):
 
 	return render(request, 'app/reg_user.html', {'form': form})
 
+
+#modified
 @login_required
 def grouped_itemsv(request):
-	search_query = request.GET.get('q', '')
+    search_query = request.GET.get('q', '')
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    
+    if tenant is None:
+        return redirect('login')
 
-	# Group by 'Item' field and calculate total quantity and subtotal for each group
-	grouped_items = sqlserverconn.objects.values('Item').annotate(
-		total_units=Sum('Units'),
-		total=Sum('Subtotal'),
-		)
-	total_amount= sqlserverconn.objects.aggregate(total_amount=Sum('Subtotal'))['total_amount']
-	
-	if search_query:
-		grouped_items = grouped_items.filter(Item__icontains=search_query)
+    # Group by 'Item' field and calculate total quantity and subtotal for each group
+    grouped_items = sqlserverconn.objects.filter(tenant=tenant).values('Item').annotate(
+        total_units=Sum('Units'),
+        total=Sum('Subtotal'),
+    )
+    total_amount = sqlserverconn.objects.filter(tenant=tenant).aggregate(total_amount=Sum('Subtotal'))['total_amount']
 
-	# Get the filtered records for each grouped item
-	records_by_item = {}
-	for item in grouped_items:
-		records = sqlserverconn.objects.filter(Item=item['Item'])
-		records_by_item[item['Item']] = records
-		
-	paginator = Paginator(grouped_items, 8)
-	page_number = request.GET.get('page')
-	page_object2 = Paginator.get_page(paginator, page_number)
+    if search_query:
+        grouped_items = grouped_items.filter(Item__icontains=search_query)
 
-	return render(request, 'app/grouped_items.html',  {
-		
-		'grouped_items': grouped_items,
-		'search_query': search_query,
-		'records_by_item': records_by_item,
-		'total_amount': total_amount,
-		'page_object2' : page_object2
-	})
+    # Get the filtered records for each grouped item
+    records_by_item = {}
+    for item in grouped_items:
+        records = sqlserverconn.objects.filter(tenant=tenant, Item=item['Item'])
+        records_by_item[item['Item']] = records
+
+    paginator = Paginator(grouped_items, 8)
+    page_number = request.GET.get('page')
+    page_object2 = Paginator.get_page(paginator, page_number)
+
+    assert isinstance(request, HttpRequest)
+
+    return render(request, 'app/grouped_items.html', {
+        'grouped_items': grouped_items,
+        'search_query': search_query,
+        'records_by_item': records_by_item,
+        'total_amount': total_amount,
+        'page_object2': page_object2
+    })
 
 
 
+#modified
+@login_required
 def issue_item_view(request):
-	search_query = request.GET.get('q', '')
+    search_query = request.GET.get('q', '')
+    current_user = request.user
+    tenant = get_current_tenant(current_user)
+    sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=request.user.tenant)
+    if tenant is None:
+        return redirect('login')
 
-	grouped_items = GroupedItems.objects.all()
-	issue_items = IssueItem.objects.all()
-	issue_item_form = IssueItemForm(request.POST or None)
-	if search_query:
-		
-		grouped_items = grouped_items.filter(grouped_item__icontains=search_query)
-		
-	if request.method == 'POST':
-		issue_item_form = IssueItemForm(request.POST)
-		if issue_item_form.is_valid():
-			issue_item = issue_item_form.save(commit=False)  # Create an unsaved instance
-			# Associate the selected grouped_item with the issue_item
-			issue_item.grouped_item = issue_item_form.cleaned_data['grouped_item']
-			issue_item.save()  # Save the issue_item instance
-			return redirect('issue_item_view')
-	else:
-		issue_item_form = IssueItemForm()
-		
-	paginator = Paginator(grouped_items, 8)
-	page_number = request.GET.get('page')
-	page_object3 = Paginator.get_page(paginator, page_number)
-	
-	return render(request, 'app/issue_item.html', {
-		
-		'issue_item_form': issue_item_form,
-		'search_query': search_query,  
-		'issue_items': issue_items,
-		'page_object3': page_object3
-	})
+    grouped_items = GroupedItems.objects.filter(sqlserverconns__in=sqlserverconns_for_tenant)
+    issue_items = IssueItem.objects.all()
+    issue_item_form = IssueItemForm(request.POST or None)
+
+    if search_query:
+        grouped_items = grouped_items.filter(grouped_item__icontains=search_query)
+
+    if request.method == 'POST':
+        issue_item_form = IssueItemForm(request.POST)
+        if issue_item_form.is_valid():
+            issue_item = issue_item_form.save(commit=False)
+            issue_item.grouped_item = issue_item_form.cleaned_data['grouped_item']
+            issue_item.tenant = tenant  # Set the tenant for the issue_item
+            issue_item.save()
+            return redirect('issue_item_view')
+    else:
+        issue_item_form = IssueItemForm()
+
+    paginator = Paginator(grouped_items, 8)
+    page_number = request.GET.get('page')
+    page_object3 = Paginator.get_page(paginator, page_number)
+
+    assert isinstance(request, HttpRequest)
+
+    return render(request, 'app/issue_item.html', {
+        'issue_item_form': issue_item_form,
+        'search_query': search_query,
+        'issue_items': issue_items,
+        'page_object3': page_object3
+    })
 
 
 
@@ -372,177 +483,245 @@ def loginpartial(request):
 		messages.success(request, 'You have been logged out')
 	return HttpResponseRedirect('/login')
 
-
-
+#modified
+@login_required
 def Dashboard(request):
-	start = request.GET.get('start')
-	end = request.GET.get('end')
-	grouped_items = GroupedItems.objects.all()
-	labour_total= Labour.objects.aggregate(total_amount=Sum('sub_total'))['total_amount']
-	
-	invt_total = sqlserverconn.objects.aggregate(invt_total=Sum('Subtotal'))['invt_total']
-	monthly_usage = (
-		sqlserverconn.objects.annotate(month=TruncMonth('Date'))
-		.values('month')
-		.annotate(total_usage=Sum('Subtotal'))
-		.order_by('month')
-	)
-	itemperc = {
-	'labels': [item.grouped_item for item in grouped_items],
-	'data': [item.total_units for item in grouped_items],
-}
-	itemperc_json = json.dumps(itemperc, cls=DjangoJSONEncoder)
-	data = {
-		'labels': [item['month'].strftime('%Y-%m-%d') for item in monthly_usage],
-		'series': [{
-			'name': 'Total Usage',
-			'data': [item['total_usage'] for item in monthly_usage],
-		}],
-	}
+    current_user = request.user
+    # Check if the user has a tenant associated with them
+    if not hasattr(current_user, 'tenant'):
+        # If not, redirect to login page or any other page you prefer
+        return redirect('login')
+    tenant = get_current_tenant(current_user)
+    sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=request.user.tenant)
+    if tenant is None:
+        return redirect('login')
+    tenant_identifier = tenant
 
-	# Convert the dates to string representations
-	data_json = json.dumps(data, cls=DjangoJSONEncoder)
+    # Assuming GroupedItems has a ForeignKey to sqlserverconn named 'sql_server_conn'
+    grouped_items = GroupedItems.objects.filter(sqlserverconns__in=sqlserverconns_for_tenant)
+    labour_total = Labour.objects.filter(tenant=tenant).aggregate(total_amount=Sum('sub_total'))['total_amount']
+    labourer_num = Labour.objects.filter(tenant=tenant).aggregate(total_no=Sum('NOL'))['total_no']
+    invt_total = sqlserverconn.objects.filter(tenant=tenant).aggregate(invt_total=Sum('Subtotal'))['invt_total']
 
-	return render(request, 'app/Dashboard.html', {
-		'chart_data': data_json,
-		'labour_total': labour_total,
-		'invt_total': invt_total,
-		'data': itemperc_json,
-	})
+    monthly_usage = (
+        sqlserverconn.objects.filter(tenant=tenant)
+        .annotate(month=TruncMonth('Date'))
+        .values('month')
+        .annotate(total_usage=Sum('Subtotal'))
+        .order_by('month')
+    )
+
+    itemperc = {
+        'labels': [item.grouped_item for item in grouped_items],
+        'data': [item.total_units for item in grouped_items],
+    }
+    itemperc_json = json.dumps(itemperc, cls=DjangoJSONEncoder)
+
+    data = {
+        'labels': [item['month'].strftime('%Y-%m-%d') for item in monthly_usage],
+        'series': [{
+            'name': 'Total Usage',
+            'data': [item['total_usage'] for item in monthly_usage],
+        }],
+    }
+
+    data_json = json.dumps(data, cls=DjangoJSONEncoder)
+
+    return render(request, 'app/Dashboard.html', {
+        'tenant_identifier': tenant_identifier,
+        'chart_data': data_json,
+        'labour_total': labour_total,
+        'invt_total': invt_total,
+        'data': itemperc_json,
+        'labourer_num': labourer_num,
+    })
 
 
 
+@login_required
 def reports_pdf(request):
-	try:
-		# Create a PDF document
-		response = HttpResponse(content_type='application/pdf')
-		response['Content-Disposition'] = 'attachment; filename="Inventory.pdf"'
+    try:
+        current_user = request.user
+        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
 
-		doc = SimpleDocTemplate(response, pagesize=letter)
-		data = []
+        # Create an Excel workbook and add a worksheet
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
 
-	
-		items = sqlserverconn.objects.all()
+        # Write header row
+        header = ['Item', 'Units', 'Unit Cost', 'Unit of Measurement', 'Subtotal', 'Date']
+        worksheet.append(header)
 
-		
-		data.append(['Item', 'Units', 'Unit Cost', 'Unit of Measurement', 'Subtotal', 'Date'])
+        # Add data to the worksheet
+        items = sqlserverconn.objects.filter(tenant=tenant)
+        for item in items:
+            row_data = [item.Item, item.Units, item.Unit_cost, item.Unit_of_measurement, item.Subtotal, item.Date]
+            worksheet.append(row_data)
 
-		for item in items:
-			data.append([item.Item, item.Units, item.Unit_cost, item.Unit_of_measurement, item.Subtotal, item.Date])
+        # Apply styles to the header row
+        header_row = worksheet[1]
+        for cell in header_row:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
 
-	
-		table = Table(data)
+        # Create a response with appropriate headers for Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Inventory.xlsx"'
 
-		
-		style = TableStyle([
-			('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-			('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-			('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-			('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-			('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-			('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-			('GRID', (0, 0), (-1, -1), 1, colors.black)
-		])
+        # Save the workbook to the response
+        workbook.save(response)
 
-		table.setStyle(style)
+        return response  # Return the HttpResponse
 
-		# Add the table to the PDF
-		elements = [table]
+    except Exception as e:
+        import traceback
+        error_message = f"An error occurred: {str(e)}\n{traceback.format_exc()}"
+        logging.error(error_message)
 
-		doc.build(elements)
+        # If you want to include the error message in the HTTP response for debugging purposes
+        return HttpResponse(error_message, status=500)
 
-		return response  # Return the HttpResponse
-	 
-	except Exception as e:
-		# Handle exceptions here, e.g., log the error
-		# You can also return an error HttpResponse if needed
-		# For example, return a 500 Internal Server Error response
-		return HttpResponse("Internal Server Error", status=500)
-	
+        # If you prefer to provide a generic error message
+        return HttpResponse("Internal Server Error", status=500)
 
 
-from django.http import HttpResponse
 
+
+    #modified
+@login_required
 def groupedi_pdf(request):
-	try:
-		# Create a new workbook and add a worksheet
-		workbook = openpyxl.Workbook()
-		worksheet = workbook.active
+    try:
+        current_user = request.user
+        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
 
-		# Write header row
-		header = ['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total']
-		worksheet.append(header)
+        # Create a new workbook and add a worksheet
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
 
-		# Add data to the worksheet
-		items = GroupedItems.objects.all()
-		for item in items:
-			row_data = [item.grouped_item, item.total_units, item.units_used, item.units_available, item.total]
-			worksheet.append(row_data)
+        # Write header row
+        header = ['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total']
+        worksheet.append(header)
 
-		# Set column widths (optional)
-		for col_num, value in enumerate(header, 1):
-			col_letter = openpyxl.utils.get_column_letter(col_num)
-			worksheet.column_dimensions[col_letter].width = max(len(str(value)) + 2, 15)
+        # Add data to the worksheet
+        items = GroupedItems.objects.filter(tenant=tenant)
+        for item in items:
+            row_data = [item.grouped_item, item.total_units, item.used_units, item.units_available, item.total]
+            worksheet.append(row_data)
 
-		# Create a response with appropriate headers for Excel file
-		response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-		response['Content-Disposition'] = 'attachment; filename="Inventory.xlsx"'
+        # Set column widths (optional)
+        for col_num, value in enumerate(header, 1):
+            col_letter = openpyxl.utils.get_column_letter(col_num)
+            worksheet.column_dimensions[col_letter].width = max(len(str(value)) + 2, 15)
 
-		# Save the workbook to the response
-		workbook.save(response)
+        # Create a response with appropriate headers for Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Categories.xlsx"'
 
-		return response
+        # Save the workbook to the response
+        workbook.save(response)
 
-	except Exception as e:
-		# Handle exceptions here, e.g., log the error
-		# You can also return an error HttpResponse if needed
-		return HttpResponse("Internal Server Error", status=500)
+        return response
+
+    except Exception as e:
+        import traceback
+        error_message = f"An error occurred: {str(e)}\n{traceback.format_exc()}"
+        logging.error(error_message)
+
+        # If you want to include the error message in the HTTP response for debugging purposes
+        return HttpResponse(error_message, status=500)
+
+        # If you prefer to provide a generic error message
+        return HttpResponse("Internal Server Error", status=500)
+
+#modified
+@login_required
+def groupedi_pdf(request):
+    try:
+        current_user = request.user
+        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
+
+        # Create a new workbook and add a worksheet
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+
+        # Write header row
+        header = ['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total']
+        worksheet.append(header)
+
+        # Add data to the worksheet
+        items = GroupedItems.objects.filter(tenant=tenant)
+        for item in items:
+            row_data = [item.grouped_item, item.total_units, item.used_units, item.units_available, item.total]
+            worksheet.append(row_data)
+
+        # Set column widths (optional)
+        for col_num, value in enumerate(header, 1):
+            col_letter = openpyxl.utils.get_column_letter(col_num)
+            worksheet.column_dimensions[col_letter].width = max(len(str(value)) + 2, 15)
+
+        # Create a response with appropriate headers for Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Categories.xlsx"'
+
+        # Save the workbook to the response
+        workbook.save(response)
+
+        return response
+
+    except Exception as e:
+        import traceback
+        error_message = f"An error occurred: {str(e)}\n{traceback.format_exc()}"
+        logging.error(error_message)
+
+        # If you want to include the error message in the HTTP response for debugging purposes
+        return HttpResponse(error_message, status=500)
+
+        # If you prefer to provide a generic error message
+        return HttpResponse("Internal Server Error", status=500)
 
 def issuei_pdf(request):
-	try:
-		# Create a PDF document
-		response = HttpResponse(content_type='application/pdf')
-		response['Content-Disposition'] = 'attachment; filename="Inventory.pdf"'
+    try:
+        current_user = request.user
+        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
 
-		doc = SimpleDocTemplate(response, pagesize=letter)
-		data = []
+        # Create a new workbook and add a worksheet
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
 
-		# Fetch data from your database or wherever you have it
-		items = IssueItem.objects.all()
+        # Write header row
+        header = ['Person', 'Item', 'Units Issued', 'Units Returned', 'Used Units', 'Date']
+        worksheet.append(header)
 
-		# Define the table data as a list of lists
-		data.append(['Item', 'Person', 'Units Issued', 'Units Returned','Units Used', 'Date'])
+        # Add data to the worksheet
+        items = IssueItem.objects.filter(tenant=tenant)
+        for item in items:
+            row_data = [item.person, item.grouped_item, item.units_issued, item.units_returned, item.used_units, item.Date]
+            worksheet.append(row_data)
 
-		for item in items:
-			data.append([item.grouped_item, item.person, item.Unit_issued, item.units_returned, item.units_used, item.Date])
+        # Set column widths (optional)
+        for col_num, value in enumerate(header, 1):
+            col_letter = openpyxl.utils.get_column_letter(col_num)
+            worksheet.column_dimensions[col_letter].width = max(len(str(value)) + 2, 15)
 
-		# Create a table with the data
-		table = Table(data)
+        # Create a response with appropriate headers for Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Items Issued.xlsx"'
 
-		# Define style for the table
-		style = TableStyle([
-			('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-			('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-			('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-			('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-			('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-			('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-			('GRID', (0, 0), (-1, -1), 1, colors.black)
-		])
+        # Save the workbook to the response
+        workbook.save(response)
 
-		table.setStyle(style)
+        return response
 
-		# Add the table to the PDF
-		elements = [table]
+    except Exception as e:
+        import traceback
+        error_message = f"An error occurred: {str(e)}\n{traceback.format_exc()}"
+        logging.error(error_message)
 
-		doc.build(elements)
+        # If you want to include the error message in the HTTP response for debugging purposes
+        return HttpResponse(error_message, status=500)
 
-		return response  # Return the HttpResponse
-	 
-	except Exception as e:
-		
-		return HttpResponse("Internal Server Error", status=500)
-	
+        # If you prefer to provide a generic error message
+        return HttpResponse("Internal Server Error", status=500)
 
 
 class SqlServerConnViewSet(viewsets.ModelViewSet):

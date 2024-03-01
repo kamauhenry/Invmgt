@@ -21,12 +21,12 @@ import debug_toolbar
 
 
 urlpatterns = [
-    path('', views.home, name='home'),
+    path('index/', views.home, name='home'),
     
     
     path('inventory/', views.inventory, name='inventory'),
     path('setup/', views.setup, name='setup'),
-    path('Dashboard/', views.Dashboard, name='Dashboard'),
+    path('', views.Dashboard, name='Dashboard'),
     path('add_record/', views.add_record, name='add_record'),
     path('CustomUOM/', views.add_custom_uom, name='add_custom_uom'),
     path('person/', views.add_Person, name='add_Person'),

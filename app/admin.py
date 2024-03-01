@@ -1,7 +1,8 @@
+import typing_extensions
 from django.contrib import admin
 
 
-from app.models import Custom_UOM, GroupedItems, IssueItem, Person,  sqlserverconn, Labour
+from app.models import *
 
 
 
@@ -11,3 +12,9 @@ admin.site.register(GroupedItems)
 admin.site.register(Custom_UOM)
 admin.site.register(Person)
 admin.site.register(Labour)
+admin.site.register(Tenant)
+admin.site.register(CustomUser)
+
+
+
+

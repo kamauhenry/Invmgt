@@ -26,7 +26,7 @@ SECRET_KEY = '7eebbb5e-b526-4b8f-9bb5-95f7ee5e35a7'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.100.4']
+ALLOWED_HOSTS = ['127.0.0.1','192.168.100.5']
 INTERNAL_IPS = ['127.0.0.1',
                 ]
 
@@ -34,14 +34,17 @@ INTERNAL_IPS = ['127.0.0.1',
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
 INSTALLED_APPS = [
     'app',
-    # Add your apps here to enable them
+    
+    #'django_tenants',
+    'mssql',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'pyodbc',
+   
+    
     'debug_toolbar',
     'rest_framework',
     'django.contrib.humanize'
@@ -53,6 +56,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    #'app.middlewares.TenantMiddleware',
+   # 'django_tenants.middleware.main.TenantMainMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,8 +65,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+#TENANT_MODEL = 'app.Tenant'
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 ROOT_URLCONF = 'Invmgt.urls'
+#PUBLIC_SCHEMA = 'public'
 
 # Template configuration
 # https://docs.djangoproject.com/en/2.1/topics/templates/
@@ -87,7 +94,7 @@ WSGI_APPLICATION = 'Invmgt.wsgi.application'
 DATABASES =  {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'fpwdb',
+        'NAME': 'fpwdbi',
         'USER':'sa',
         'PASSWORD':'yrenhke',
         'HOST':'localhost',
@@ -149,3 +156,4 @@ LOGGING = {
         },
     },
 }
+LOGIN_REDIRECT_URL = 'Dashboard' 

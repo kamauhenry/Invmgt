@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: chartData.labels,
                 datasets: [{
-                    label: 'Total Usage',
+                    label: 'Total Spent per Month',
                     data: chartData.series[0].data,
                     backgroundColor: barColors,
                     borderColor: barColors,
@@ -21,6 +21,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 }]
             },
             options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Expenses', 
+                        font: {
+                            size: 16
+                        }
+                    }
+                }, 
                 scales: {
                     y: {
                         beginAtZero: true
