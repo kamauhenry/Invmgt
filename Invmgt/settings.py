@@ -157,3 +157,6 @@ LOGGING = {
     },
 }
 LOGIN_REDIRECT_URL = 'Dashboard' 
+
+
+AUTH_USER_MODEL = 'app.CustomUser'

@@ -491,8 +491,8 @@ def Dashboard(request):
     if not hasattr(current_user, 'tenant'):
         # If not, redirect to login page or any other page you prefer
         return redirect('login')
-    tenant = get_current_tenant(current_user)
-    sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=request.user.tenant)
+    tenant = current_user
+    sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=tenant)
     if tenant is None:
         return redirect('login')
     tenant_identifier = tenant

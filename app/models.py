@@ -9,67 +9,93 @@ from django.utils import timezone
 from django.db.models.functions import TruncMonth
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
-from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission, Group
+from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission, Group, UserManager
 import hashlib
 
+
+
+###### REMEMBER TO DELETE THE MODEL GENERATE_UNIQUE_USERNAME ######
+
 def generate_unique_username():
-    # Set a default name or use a constant
+    """Generates a unique username with a maximum of 10 retries."""
     default_name = "user"
+    max_retries = 10
 
-    # Combine the name with a random string to ensure uniqueness
-    unique_username = f"{default_name}_{get_random_string(length=8)}"
-
-    # Ensure the generated username is unique
-    while User.objects.filter(username=unique_username).exists():
+    for _ in range(max_retries):
         unique_username = f"{default_name}_{get_random_string(length=8)}"
+        if not CustomUser.objects.filter(username=unique_username).exists():
+            return unique_username
 
-    return unique_username
+    raise ValueError("Failed to generate unique username after %d attempts" % max_retries)
+
 
 class CustomUserManager(BaseUserManager):
+
     def create_user(self, email, password=None, tenant=None, **extra_fields):
         if tenant is None:
             tenant = Tenant.create_for_user(self)
+
         user = self.model(email=email, tenant=tenant, **extra_fields)
+
+        tenant.user = user  # Assign the created user to the Tenant instance
+        tenant.save()  # Save the Tenant instance with the associated user
+
+
+        try:
+            user.set_password(password)
+            user.save(using=self._db)
+        except Exception as e:
+            raise ValueError(f"Failed to create user: {e}") from e
+        return user
+        
+
         user.set_password(password)
         user.save(using=self._db)
-        
+
         return user
 
     def create_superuser(self, email, password=None, tenant=None, **extra_fields):
-        tenant = Tenant.create_for_user(self)    
+      
         user = self.create_user(email, password=password, tenant=tenant, **extra_fields)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
+
         return user
+
 
 class CustomUser(AbstractUser):
     # Add fields specific to your user model
-    tenant = models.ForeignKey('Tenant', on_delete=models.CASCADE, null=True)
+    tenant = models.OneToOneField('Tenant', on_delete=models.CASCADE, null=True, related_name='user_talent')
     objects = CustomUserManager()
-    
+
     class Meta:
-        # Add any additional options as needed
-        pass
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
+
+    # Removed irrelevant comment
 
 
 CustomUser._meta.get_field('groups').remote_field.related_name = 'customuser_groups'
 CustomUser._meta.get_field('user_permissions').remote_field.related_name = 'customuser_user_permissions'
 
+
 class Tenant(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='tenant_user')
+
     @classmethod
     def create_for_user(cls, user):
         # Automatically create a Tenant instance for the user
         return cls.objects.create(user=user)
-    
+
     def save(self, *args, **kwargs):
+        print("Current user before check:", self.user)
+
+	
         if not self.user:
             unique_username = generate_unique_username()
-            self.user = User.objects.create(username=unique_username)
+            new_user = CustomUser.objects.create(username=unique_username)  # Fix: Create a CustomUser instance
         super().save(*args, **kwargs)
-
 
 
 # Define the sqlserverconn model with Subtotal property
