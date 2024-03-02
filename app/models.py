@@ -12,10 +12,9 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission, Group, UserManager
 import hashlib
 
-
+### kitu tunafanya hapa ni ku generate tumia ii function iko chiniku tengeneza tenants when we com back
 
 ###### REMEMBER TO DELETE THE MODEL GENERATE_UNIQUE_USERNAME ######
-
 def generate_unique_username():
     """Generates a unique username with a maximum of 10 retries."""
     default_name = "user"
@@ -31,15 +30,11 @@ def generate_unique_username():
 
 class CustomUserManager(BaseUserManager):
 
-    def create_user(self, email, password=None, tenant=None, **extra_fields):
-        if tenant is None:
-            tenant = Tenant.create_for_user(self)
+    def create_user(self, email, password=None, **extra_fields):
+        if extra_fields.get('tenant') is None:
+            extra_fields['tenant'] = self.model.objects.create()
 
-        user = self.model(email=email, tenant=tenant, **extra_fields)
-
-        tenant.user = user  # Assign the created user to the Tenant instance
-        tenant.save()  # Save the Tenant instance with the associated user
-
+        user = self.model(email=email, **extra_fields)
 
         try:
             user.set_password(password)
@@ -47,16 +42,9 @@ class CustomUserManager(BaseUserManager):
         except Exception as e:
             raise ValueError(f"Failed to create user: {e}") from e
         return user
-        
 
-        user.set_password(password)
-        user.save(using=self._db)
-
-        return user
-
-    def create_superuser(self, email, password=None, tenant=None, **extra_fields):
-      
-        user = self.create_user(email, password=password, tenant=tenant, **extra_fields)
+    def create_superuser(self, email, password=None, **extra_fields):
+        user = self.create_user(email, password=password, **extra_fields)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -66,41 +54,23 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     # Add fields specific to your user model
-    tenant = models.OneToOneField('Tenant', on_delete=models.CASCADE, null=True, related_name='user_talent')
+    tenant = models.OneToOneField('self', on_delete=models.CASCADE, null=True, related_name='tenant_user')
     objects = CustomUserManager()
 
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
-    # Removed irrelevant comment
-
+# Removed irrelevant comment
 
 CustomUser._meta.get_field('groups').remote_field.related_name = 'customuser_groups'
 CustomUser._meta.get_field('user_permissions').remote_field.related_name = 'customuser_user_permissions'
 
 
-class Tenant(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='tenant_user')
-
-    @classmethod
-    def create_for_user(cls, user):
-        # Automatically create a Tenant instance for the user
-        return cls.objects.create(user=user)
-
-    def save(self, *args, **kwargs):
-        print("Current user before check:", self.user)
-
-	
-        if not self.user:
-            unique_username = generate_unique_username()
-            new_user = CustomUser.objects.create(username=unique_username)  # Fix: Create a CustomUser instance
-        super().save(*args, **kwargs)
-
 
 # Define the sqlserverconn model with Subtotal property
 class sqlserverconn(models.Model):
-	tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+	tenant = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 	Item_id = models.BigAutoField(primary_key=True, db_column='Item_id' )
 	Item = models.CharField(max_length=30, db_index=True , db_column='Item')
 	Item_Description = models.CharField(max_length=30, null=True, blank=True)
@@ -144,7 +114,7 @@ class sqlserverconn(models.Model):
 
 	
 class Labour(models.Model):
-	tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+	tenant = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 	labour_type = models.CharField(max_length=20)
 	NOL = models.PositiveIntegerField()
 	Date = models.DateField(default=timezone.now)
@@ -213,7 +183,7 @@ class GroupedItems(models.Model):
 	
 
 class Person(models.Model):
-	tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+	tenant = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 	person = models.CharField(max_length=20)
 
 	def __str__(self):

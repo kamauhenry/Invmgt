@@ -5,7 +5,7 @@ when you run "manage.py test".
 
 import django
 from django.test import TestCase
-from app.models import CustomUser, CustomUserManager, Tenant  , generate_unique_username
+from app.models import CustomUser, CustomUserManager,  generate_unique_username
 
 
 # TODO: Configure your database in settings.py and sync before running tests.
@@ -56,17 +56,3 @@ class TestCustomUser(TestCase):
 
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
-
-    def test_create_user_with_tenant(self):
-        """
-        Tests that create_user can handle a provided tenant object.
-        """
-        email = "test@example.com"
-        password = "password123"
-        tenant = Tenant.objects.create(name="Test Tenant")
-
-        user = CustomUserManager().create_user(email, password, tenant=tenant)
-
-        self.assertEqual(user.email, email)
-        self.assertTrue(user.check_password(password))
-        self.assertEqual(user.tenant, tenant)

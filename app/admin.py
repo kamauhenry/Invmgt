@@ -18,7 +18,8 @@ admin.site.register(Labour)
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Tenant
+from .models import CustomUser
+
 
 class CustomUserAdmin(UserAdmin):
     # Define fields to display in the list view of the admin interface
@@ -52,4 +53,4 @@ class TenantAdmin(admin.ModelAdmin):
 
 # Register models with their admin classes
 admin.site.register(CustomUser, CustomUserAdmin)
-admin.site.register(Tenant, TenantAdmin)
+
