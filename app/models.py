@@ -26,7 +26,7 @@ def generate_unique_username():
             return unique_username
 
     raise ValueError("Failed to generate unique username after %d attempts" % max_retries)
-
+#ftg we still pusihng
 
 class CustomUserManager(BaseUserManager):
 
