@@ -112,7 +112,7 @@ class sqlserverconn(models.Model):
 		]
 		
 
-	
+	#im very tire but staki kukata streak nimebeat walai
 class Labour(models.Model):
 	tenant = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 	labour_type = models.CharField(max_length=20)
