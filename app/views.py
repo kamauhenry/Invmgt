@@ -38,7 +38,7 @@ from rest_framework import viewsets
 from app.serializers import *
 from django.http import JsonResponse
 from django.http import HttpResponse
-from .custom_tenants import get_current_tenant
+
 
 
 
@@ -67,10 +67,11 @@ item_units_used = {}
 def home(request):
     """Renders the home page."""
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     # Filter records based on the current user's tenant
     sqlserverconns = sqlserverconn.objects.filter(tenant=tenant).order_by('-Date')
@@ -101,10 +102,11 @@ def home(request):
 @login_required
 def return_item_view(request, pk):
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
     
     # Make sure the IssueItem belongs to the current user's tenant
     record = get_object_or_404(IssueItem, id=pk, tenant=tenant)
@@ -125,10 +127,12 @@ def return_item_view(request, pk):
 def inventory(request):
     """Renders the contact page."""
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    # Assuming your CustomUser model has a 'tenant' field
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
     
     form = SqlServerConnForm(request.POST or None, request.FILES or None, initial={'tenant': tenant})
     Custom_uom_form = Custom_UOM_form(request.POST or None, request.FILES or None, initial={'tenant': tenant})
@@ -169,10 +173,12 @@ def add_custom_uom(request):
 # modified
 def add_record(request):
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    # Assuming your CustomUser model has a 'tenant' field
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     if request.user.is_authenticated:
         form = SqlServerConnForm(request.POST or None, initial={'tenant': tenant})
@@ -195,10 +201,12 @@ def add_record(request):
 def add_Person(request):
     # Each tenant to have its own view
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    # Assuming your CustomUser model has a 'tenant' field
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     people = Person.objects.filter(tenant=tenant)
     Person_form = Personform(request.POST or None)
@@ -228,10 +236,12 @@ def add_Person(request):
 @login_required
 def update_record(request, pk):
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    # Assuming your CustomUser model has a 'tenant' field
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     current_record = get_object_or_404(sqlserverconn, tenant=tenant, Item_id=pk)
     
@@ -290,10 +300,11 @@ def LoginView(request):
 @login_required
 def labourers_view(request):
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
-        return redirect('login') 
+    if current_user.tenant is None:
+        return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant 
 
     form = LabourForm(request.POST or None, initial={'tenant': tenant})
     labourers = Labour.objects.filter(tenant=tenant).order_by('-Date')
@@ -341,10 +352,11 @@ def setup(request):
 @login_required
 def delete_labourer(request, pk):
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     if request.user.is_authenticated:
         try:
@@ -364,10 +376,11 @@ def delete_labourer(request, pk):
 @login_required
 def update_labourer(request, pk):
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     if request.user.is_authenticated:
         current_record = Labour.objects.get(id=pk, tenant=tenant)
@@ -397,10 +410,11 @@ def register_user(request):
 def grouped_itemsv(request):
     search_query = request.GET.get('q', '')
     current_user = request.user
-    tenant = get_current_tenant(current_user)
-    
-    if tenant is None:
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     # Group by 'Item' field and calculate total quantity and subtotal for each group
     grouped_items = sqlserverconn.objects.filter(tenant=tenant).values('Item').annotate(
@@ -439,10 +453,13 @@ def grouped_itemsv(request):
 def issue_item_view(request):
     search_query = request.GET.get('q', '')
     current_user = request.user
-    tenant = get_current_tenant(current_user)
+    
     sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=request.user.tenant)
-    if tenant is None:
+    if current_user.tenant is None:
         return redirect('login')
+
+    # Access tenant information directly from current_user.tenant
+    tenant = current_user.tenant
 
     grouped_items = GroupedItems.objects.filter(sqlserverconns__in=sqlserverconns_for_tenant)
     issue_items = IssueItem.objects.all()
