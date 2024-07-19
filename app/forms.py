@@ -140,7 +140,7 @@ class Personform(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     class Meta:
-        model = Person
+        model = Employee
         fields = ['person']
         
     def __init__(self, *args, **kwargs):
@@ -161,3 +161,10 @@ class DateForm(forms.Form):
         widget=forms.DateInput(attrs={'type': 'date'}))
     end = forms.DateField(
         widget=forms.DateInput(attrs={'type': 'date'}))
+    
+
+
+
+
+
+

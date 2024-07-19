@@ -59,7 +59,8 @@ item_units_used = {}
 #	print(result)
 #	return render(request,'index.html',{'sqlserverconn':result})
 
-
+def project(request):
+    return render(request, 'app/projects.html')
 
 
 
@@ -122,7 +123,7 @@ def return_item_view(request, pk):
 
 
 
-#modified
+#modified 
 @login_required
 def inventory(request):
     """Renders the contact page."""
@@ -208,7 +209,7 @@ def add_Person(request):
     # Access tenant information directly from current_user.tenant
     tenant = current_user.tenant
 
-    people = Person.objects.filter(tenant=tenant)
+    people = Employee.objects.filter(tenant=tenant)
     Person_form = Personform(request.POST or None)
     
     if request.user.is_authenticated:
@@ -769,6 +770,6 @@ class LabourViewSet(viewsets.ModelViewSet):
 	serializer_class = LabourSerializer
 	
 class PersonSet(viewsets.ModelViewSet):
-	queryset = Person.objects.all()
+	queryset = Employee.objects.all()
 	serializer_class = personSerializer
 	
