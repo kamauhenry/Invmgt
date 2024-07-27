@@ -1,0 +1,57 @@
+{% extends 'app/layout.html' %}
+
+{% load humanize %}
+
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'app/css/projmang.css' %}">
+
+
+
+<body>
+    <div class="proj">
+        <h1>Welcome to Project Management!</h1>
+        <p id="greeting"></p>
+
+    </div>
+    <div class="proj">
+        <a href="#" class="btn btn-primary mb-3">Create New Project</a>
+    </div>
+    <div class="proj">
+        <div class="projrow">
+            <div class="project-row">
+                <div class="project-box col">
+                    <button class="btn btn-secondary">Project 1</button>
+                </div>
+            </div>
+            <div class="project-row">
+                <div class="project-box col">
+                    <button class="btn btn-secondary">Project 2</button>
+                </div>
+            </div>
+            <div class="project-row">
+                <div class="project-box col">
+                    <button class="btn btn-secondary">Project 3</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const greetingEl = document.getElementById('greeting');
+        const date = new Date();
+        const hour = date.getHours();
+
+        if (hour < 12) {
+            greetingEl.textContent = 'Good Morning!';
+        } else if (hour < 17) {
+            greetingEl.textContent = 'Good Afternoon!';
+        } else {
+            greetingEl.textContent = 'Good Evening!';
+        }</script>
+</body>
+
+
+
+{% endblock %}

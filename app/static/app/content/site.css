@@ -178,3 +178,29 @@ flex: 1;
 height: 1px;
 background: #eee;
 }
+
+
+
+projrow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+
+.proj {
+    padding-top: 10000px;
+    padding-bottom: 20px;
+}
+
+body {
+    width: 100%; /* Ensure the container takes full width */
+}
+
+.p1 {
+    color: aquamarine;
+}
+
+.btn12 {
+    color: azure;
+}

@@ -10,8 +10,8 @@
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/Dashboard.css' %}">
-    <link rel="icon" href=
-        "https://th.bing.com/th/id/R.c030ad42f95832ec39b0b6af743d8ada?rik=APDvPYbC0uJ2PA&pid=ImgRaw&r=0"
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/projmang.css' %}">
+    <link rel="icon" href="https://th.bing.com/th/id/R.c030ad42f95832ec39b0b6af743d8ada?rik=APDvPYbC0uJ2PA&pid=ImgRaw&r=0"
           type="image/x-icon">
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}">
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
@@ -41,11 +41,12 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            {% if user.is_authenticated %}
             <ul class="navbar-nav mr-auto" style="list-style:none;">
-                {% if user.is_authenticated %}
-               <li class="nav-item ">
+
+                <li class="nav-item ">
                     <a class="nav-link" href="{% url 'Dashboard' %}">Dashboard <span class="sr-only">(current)</span></a>
-                </li> 
+                </li>
                 <li class="nav-item ">
                     <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
                 </li>
@@ -70,15 +71,16 @@
                     </a>
                     <div class="dropdown-menu" aria-labelledby="userDropdown">
                         <a class="dropdown-item" href="{% url 'reg_user' %}" style="color: #000; background-color: #fff;">Register User</a>
-                        <br/>
+                        <br />
                         <a class="dropdown-item" href="{% url 'add_custom_uom' %}" style="color: #000; background-color: #fff;">add Custom Unit of Measurement </a>
                     </div>
                 </li>
 
                 {% endif %}
 
-                {% endif %}
+
             </ul>
+            {% endif %}
 
             {% if user.is_authenticated %}
             <ul class="navbar-nav  navbar-custom ml-auto" style="list-style:none;">

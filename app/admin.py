@@ -10,8 +10,10 @@ admin.site.register(sqlserverconn)
 admin.site.register(IssueItem)
 admin.site.register(GroupedItems)
 admin.site.register(Custom_UOM)
-admin.site.register(Person)
+admin.site.register(Employee)
 admin.site.register(Labour)
+admin.site.register(Task)
+admin.site.register(Project)
 
 
 

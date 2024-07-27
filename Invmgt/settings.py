@@ -91,20 +91,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Invmgt.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-DATABASES =  {
+DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'fpwdbi',
-        'USER':'sa',
-        'PASSWORD':'yrenhke',
-        'HOST':'localhost',
-        'PORT':'',
-        "OPTIONS": {"driver": "ODBC Driver 17 for SQL Server", 'init_command': "SET_sql_mode='STRICT_TRANS_TABLES'"
-        ,'unicode_results': True,
+        'NAME': 'fdbp',
+        'USER': 'user1',
+        'PASSWORD': 'yrenhke',
+        'HOST': 'localhost',
+        'PORT': '',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'autocommit': True,
+            'unicode_results': True,
         },
-        
     },
-  
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATABASE_CONNECTION_POOLING = False

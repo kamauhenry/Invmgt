@@ -59,7 +59,8 @@ item_units_used = {}
 #	print(result)
 #	return render(request,'index.html',{'sqlserverconn':result})
 
-def project(request):
+def projects(request):
+    
     return render(request, 'app/projects.html')
 
 
@@ -67,15 +68,18 @@ def project(request):
 @login_required
 def home(request):
     """Renders the home page."""
-    current_user = request.user
-    if current_user.tenant is None:
-        return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    # Get the project_id from the request, e.g., from query parameters
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
 
-    # Filter records based on the current user's tenant
-    sqlserverconns = sqlserverconn.objects.filter(tenant=tenant).order_by('-Date')
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+
+    # Filter records based on the project_id
+    sqlserverconns = sqlserverconn.objects.filter(project=project).order_by('-Date')
 
     paginator = Paginator(sqlserverconns, 15)
     page_number = request.GET.get('page')
@@ -86,7 +90,8 @@ def home(request):
     context = {
         'sqlserverconns': sqlserverconns,
         'page_object': page_object,
-        'total_records': total_records
+        'total_records': total_records,
+        'project': project,
     }
 
     assert isinstance(request, HttpRequest)
@@ -100,6 +105,8 @@ def home(request):
         }
     )
 
+
+
 @login_required
 def return_item_view(request, pk):
     current_user = request.user
@@ -107,10 +114,17 @@ def return_item_view(request, pk):
         return redirect('login')
 
     # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
+
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+
     
     # Make sure the IssueItem belongs to the current user's tenant
-    record = get_object_or_404(IssueItem, id=pk, tenant=tenant)
+    record = get_object_or_404(IssueItem, id=pk, project=project)
     return_form = IssueItemForm(request.POST or None, instance = record)
     if request.method == 'POST':
         if return_form.is_valid():
@@ -132,16 +146,23 @@ def inventory(request):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
+
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+
+  
     
-    form = SqlServerConnForm(request.POST or None, request.FILES or None, initial={'tenant': tenant})
-    Custom_uom_form = Custom_UOM_form(request.POST or None, request.FILES or None, initial={'tenant': tenant})
+    form = SqlServerConnForm(request.POST or None, request.FILES or None, initial={'project': project})
+    Custom_uom_form = Custom_UOM_form(request.POST or None, request.FILES or None, initial={'project': project})
     
     if request.method == 'POST':
         if form.is_valid():
             form_instance = form.save(commit=False)
-            form_instance.tenant = tenant
+            form_instance.project = project
             form_instance.save()
     
     assert isinstance(request, HttpRequest)
@@ -178,17 +199,23 @@ def add_record(request):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
 
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+
+  
     if request.user.is_authenticated:
-        form = SqlServerConnForm(request.POST or None, initial={'tenant': tenant})
+        form = SqlServerConnForm(request.POST or None, initial={'project': project})
 
         if request.method == "POST":
             form = SqlServerConnForm(request.POST)
             if form.is_valid():
                 record_instance = form.save(commit=False)
-                record_instance.tenant = tenant
+                record_instance.project = project
                 record_instance.save()
                 messages.success(request, "Record Added...")
                 return redirect('home')
@@ -206,10 +233,17 @@ def add_Person(request):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
 
-    people = Employee.objects.filter(tenant=tenant)
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+
+   
+
+    people = Employee.objects.filter(project=project)
     Person_form = Personform(request.POST or None)
     
     if request.user.is_authenticated:
@@ -217,7 +251,7 @@ def add_Person(request):
             Person_form = Personform(request.POST)
             if Person_form.is_valid():
                 person_instance = Person_form.save(commit=False)
-                person_instance.tenant = tenant
+                person_instance.project = project
                 person_instance.save()
                 messages.success(request, "Record Added...")
                 return redirect('issue_item_view')
@@ -241,12 +275,19 @@ def update_record(request, pk):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
 
-    current_record = get_object_or_404(sqlserverconn, tenant=tenant, Item_id=pk)
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+
+
+
+    current_record = get_object_or_404(sqlserverconn, project=project, Item_id=pk)
     
-    form = SqlServerConnForm(request.POST or None, instance=current_record, initial={'tenant': tenant})
+    form = SqlServerConnForm(request.POST or None, instance=current_record, initial={'project': project})
 
     if request.user.is_authenticated:
         if request.method == "POST":
@@ -304,18 +345,23 @@ def labourers_view(request):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant 
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
 
-    form = LabourForm(request.POST or None, initial={'tenant': tenant})
-    labourers = Labour.objects.filter(tenant=tenant).order_by('-Date')
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id) 
+
+    form = LabourForm(request.POST or None, initial={'project': project})
+    labourers = Labour.objects.filter(project=project).order_by('-Date')
 
     if request.method == 'POST' and form.is_valid():
         labour = form.save()
         messages.success(request, "Record added successfully!")
         return redirect('labourers_view')
 
-    total_amount = Labour.objects.filter(tenant=tenant).aggregate(total_amount=Sum('sub_total'))['total_amount']
+    total_amount = Labour.objects.filter(project=project).aggregate(total_amount=Sum('sub_total'))['total_amount']
 
     paginator = Paginator(labourers, 8)
     page_number = request.GET.get('page')
@@ -356,12 +402,17 @@ def delete_labourer(request, pk):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
+
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
 
     if request.user.is_authenticated:
         try:
-            delete_it = Labour.objects.get(id=pk, tenant=tenant)
+            delete_it = Labour.objects.get(id=pk, projectt=project)
             delete_it.delete()
             messages.success(request, 'Record deleted')
         except Labour.DoesNotExist:
@@ -380,11 +431,16 @@ def update_labourer(request, pk):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
+
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
 
     if request.user.is_authenticated:
-        current_record = Labour.objects.get(id=pk, tenant=tenant)
+        current_record = Labour.objects.get(id=pk, project=project)
         form = LabourForm(request.POST or None, instance=current_record)
         if form.is_valid():
             form.save()
@@ -414,15 +470,20 @@ def grouped_itemsv(request):
     if current_user.tenant is None:
         return redirect('login')
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
+
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
 
     # Group by 'Item' field and calculate total quantity and subtotal for each group
-    grouped_items = sqlserverconn.objects.filter(tenant=tenant).values('Item').annotate(
+    grouped_items = sqlserverconn.objects.filter(project=project).values('Item').annotate(
         total_units=Sum('Units'),
         total=Sum('Subtotal'),
     )
-    total_amount = sqlserverconn.objects.filter(tenant=tenant).aggregate(total_amount=Sum('Subtotal'))['total_amount']
+    total_amount = sqlserverconn.objects.filter(project=project).aggregate(total_amount=Sum('Subtotal'))['total_amount']
 
     if search_query:
         grouped_items = grouped_items.filter(Item__icontains=search_query)
@@ -430,7 +491,7 @@ def grouped_itemsv(request):
     # Get the filtered records for each grouped item
     records_by_item = {}
     for item in grouped_items:
-        records = sqlserverconn.objects.filter(tenant=tenant, Item=item['Item'])
+        records = sqlserverconn.objects.filter(project=project, Item=item['Item'])
         records_by_item[item['Item']] = records
 
     paginator = Paginator(grouped_items, 8)
@@ -455,14 +516,19 @@ def issue_item_view(request):
     search_query = request.GET.get('q', '')
     current_user = request.user
     
-    sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=request.user.tenant)
+
     if current_user.tenant is None:
         return redirect('login')
+    
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
 
-    # Access tenant information directly from current_user.tenant
-    tenant = current_user.tenant
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
 
-    grouped_items = GroupedItems.objects.filter(sqlserverconns__in=sqlserverconns_for_tenant)
+    grouped_items = GroupedItems.objects.filter(project=project)
     issue_items = IssueItem.objects.all()
     issue_item_form = IssueItemForm(request.POST or None)
 
@@ -474,7 +540,7 @@ def issue_item_view(request):
         if issue_item_form.is_valid():
             issue_item = issue_item_form.save(commit=False)
             issue_item.grouped_item = issue_item_form.cleaned_data['grouped_item']
-            issue_item.tenant = tenant  # Set the tenant for the issue_item
+            issue_item.project = project  # Set the tenant for the issue_item
             issue_item.save()
             return redirect('issue_item_view')
     else:
@@ -504,25 +570,26 @@ def loginpartial(request):
 #modified
 @login_required
 def Dashboard(request):
-    current_user = request.user
-    # Check if the user has a tenant associated with them
-    if not hasattr(current_user, 'tenant'):
-        # If not, redirect to login page or any other page you prefer
-        return redirect('login')
-    tenant = current_user
-    sqlserverconns_for_tenant = sqlserverconn.objects.filter(tenant=tenant)
-    if tenant is None:
-        return redirect('login')
-    tenant_identifier = tenant
+   
+    
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        # Handle the case where project_id is not provided
+        return redirect('login')  # Redirect to a default page or show an error
+
+    # Get the project object
+    project = get_object_or_404(Project, id=project_id)
+    
+ 
 
     # Assuming GroupedItems has a ForeignKey to sqlserverconn named 'sql_server_conn'
-    grouped_items = GroupedItems.objects.filter(sqlserverconns__in=sqlserverconns_for_tenant)
-    labour_total = Labour.objects.filter(tenant=tenant).aggregate(total_amount=Sum('sub_total'))['total_amount']
-    labourer_num = Labour.objects.filter(tenant=tenant).aggregate(total_no=Sum('NOL'))['total_no']
-    invt_total = sqlserverconn.objects.filter(tenant=tenant).aggregate(invt_total=Sum('Subtotal'))['invt_total']
+    grouped_items = GroupedItems.objects.filter(project=project)
+    labour_total = Labour.objects.filter(project=project).aggregate(total_amount=Sum('sub_total'))['total_amount']
+    labourer_num = Labour.objects.filter(project=project).aggregate(total_no=Sum('NOL'))['total_no']
+    invt_total = sqlserverconn.objects.filter(project=project).aggregate(invt_total=Sum('Subtotal'))['invt_total']
 
     monthly_usage = (
-        sqlserverconn.objects.filter(tenant=tenant)
+        sqlserverconn.objects.filter(project=project)
         .annotate(month=TruncMonth('Date'))
         .values('month')
         .annotate(total_usage=Sum('Subtotal'))
@@ -546,7 +613,7 @@ def Dashboard(request):
     data_json = json.dumps(data, cls=DjangoJSONEncoder)
 
     return render(request, 'app/Dashboard.html', {
-        'tenant_identifier': tenant_identifier,
+        'project': project,
         'chart_data': data_json,
         'labour_total': labour_total,
         'invt_total': invt_total,
@@ -559,8 +626,13 @@ def Dashboard(request):
 @login_required
 def reports_pdf(request):
     try:
-        current_user = request.user
-        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
+        project_id = request.GET.get('project_id')
+        if not project_id:
+            # Handle the case where project_id is not provided
+            return redirect('login')  # Redirect to a default page or show an error
+
+        # Get the project object
+        project = get_object_or_404(Project, id=project_id)
 
         # Create an Excel workbook and add a worksheet
         workbook = openpyxl.Workbook()
@@ -569,9 +641,10 @@ def reports_pdf(request):
         # Write header row
         header = ['Item', 'Units', 'Unit Cost', 'Unit of Measurement', 'Subtotal', 'Date']
         worksheet.append(header)
+        
 
         # Add data to the worksheet
-        items = sqlserverconn.objects.filter(tenant=tenant)
+        items = sqlserverconn.objects.filter(project=project)
         for item in items:
             row_data = [item.Item, item.Units, item.Unit_cost, item.Unit_of_measurement, item.Subtotal, item.Date]
             worksheet.append(row_data)
@@ -599,9 +672,6 @@ def reports_pdf(request):
         # If you want to include the error message in the HTTP response for debugging purposes
         return HttpResponse(error_message, status=500)
 
-        # If you prefer to provide a generic error message
-        return HttpResponse("Internal Server Error", status=500)
-
 
 
 
@@ -609,9 +679,13 @@ def reports_pdf(request):
 @login_required
 def groupedi_pdf(request):
     try:
-        current_user = request.user
-        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
+        project_id = request.GET.get('project_id')
+        if not project_id:
+        # Handle the case where project_id is not provided
+            return redirect('login')  # Redirect to a default page or show an error
 
+        # Get the project object
+        project = get_object_or_404(Project, id=project_id)
         # Create a new workbook and add a worksheet
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
@@ -619,9 +693,11 @@ def groupedi_pdf(request):
         # Write header row
         header = ['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total']
         worksheet.append(header)
+        
+
 
         # Add data to the worksheet
-        items = GroupedItems.objects.filter(tenant=tenant)
+        items = GroupedItems.objects.filter(project=project)
         for item in items:
             row_data = [item.grouped_item, item.total_units, item.used_units, item.units_available, item.total]
             worksheet.append(row_data)
@@ -648,16 +724,19 @@ def groupedi_pdf(request):
         # If you want to include the error message in the HTTP response for debugging purposes
         return HttpResponse(error_message, status=500)
 
-        # If you prefer to provide a generic error message
-        return HttpResponse("Internal Server Error", status=500)
+
 
 #modified
 @login_required
 def groupedi_pdf(request):
     try:
-        current_user = request.user
-        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
+        project_id = request.GET.get('project_id')
+        if not project_id:
+            # Handle the case where project_id is not provided
+            return redirect('login')  # Redirect to a default page or show an error
 
+    # Get the project object
+        project = get_object_or_404(Project, id=project_id)
         # Create a new workbook and add a worksheet
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
@@ -666,8 +745,9 @@ def groupedi_pdf(request):
         header = ['Grouped item', 'Total Units', 'Units Used', 'Units Available', 'Total']
         worksheet.append(header)
 
+
         # Add data to the worksheet
-        items = GroupedItems.objects.filter(tenant=tenant)
+        items = GroupedItems.objects.filter(project=project)
         for item in items:
             row_data = [item.grouped_item, item.total_units, item.used_units, item.units_available, item.total]
             worksheet.append(row_data)
@@ -694,14 +774,17 @@ def groupedi_pdf(request):
         # If you want to include the error message in the HTTP response for debugging purposes
         return HttpResponse(error_message, status=500)
 
-        # If you prefer to provide a generic error message
-        return HttpResponse("Internal Server Error", status=500)
 
 def issuei_pdf(request):
     try:
-        current_user = request.user
-        tenant = current_user.tenant  # Assuming you have a tenant field in your User model
+        project_id = request.GET.get('project_id')
+        if not project_id:
+        # Handle the case where project_id is not provided
+            return redirect('login')  # Redirect to a default page or show an error
 
+        # Get the project object
+        project = get_object_or_404(Project, id=project_id)
+        
         # Create a new workbook and add a worksheet
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
@@ -710,8 +793,9 @@ def issuei_pdf(request):
         header = ['Person', 'Item', 'Units Issued', 'Units Returned', 'Used Units', 'Date']
         worksheet.append(header)
 
+
         # Add data to the worksheet
-        items = IssueItem.objects.filter(tenant=tenant)
+        items = IssueItem.objects.filter(project=project)
         for item in items:
             row_data = [item.person, item.grouped_item, item.units_issued, item.units_returned, item.used_units, item.Date]
             worksheet.append(row_data)
@@ -738,8 +822,7 @@ def issuei_pdf(request):
         # If you want to include the error message in the HTTP response for debugging purposes
         return HttpResponse(error_message, status=500)
 
-        # If you prefer to provide a generic error message
-        return HttpResponse("Internal Server Error", status=500)
+
 
 
 class SqlServerConnViewSet(viewsets.ModelViewSet):

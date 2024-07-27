@@ -17,8 +17,8 @@ class SqlServerConnSerializer(serializers.HyperlinkedModelSerializer):
 
 class personSerializer(serializers.HyperlinkedModelSerializer):
     class Meta :
-        model = Person
-        fields = [ 'person' ]
+        model = Employee
+        fields = [ 'Employee' ]
 
 class IssueItemSerializer(serializers.HyperlinkedModelSerializer):
     grouped_item = GroupedItemSerializer()
