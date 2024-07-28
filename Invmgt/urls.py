@@ -57,6 +57,7 @@ urlpatterns = [
     path('groupedi_pdf/', views.groupedi_pdf, name='groupedi_pdf'),
     path('issuei_pdf/', views.issuei_pdf, name='issuei_pdf'),
     path('projects/', views.projects, name='projects'),
+    path('create_project/', views.create_project, name='create_project'),
     
     path('app/',include('app.urls')),
 

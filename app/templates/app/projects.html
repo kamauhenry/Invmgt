@@ -4,20 +4,58 @@
 
 {% load static %}
 {% block content %}
-<link rel="stylesheet" href="{% static 'app/css/projmang.css' %}">
+<head>
+    <style>
+        /* Apply margin to the proj class */
+        .proj {
+            margin-bottom: 20px; /* Space below this div */
+        }
 
+        /* Apply margin to the proj1 class */
+        .proj1 {
+            margin-bottom: 20px; /* Space below this div */
+        }
 
+        /* Apply margin to the proj2 class */
+        .proj2 {
+            margin-bottom: 20px; /* Space below this div */
+        }
+
+        /* Ensure space between rows in proj2 */
+        .projrow {
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-top: 30px;
+        }
+        .project-row {
+
+        }
+        /* Optional: Add space between project-box elements */
+        .project-box {
+            margin-bottom: 10px;
+            width: 100%;
+            height: 100%;
+        }
+        .btn-secondary {
+            width: 120px;
+            height: 150px;
+        }
+    </style>
+</head>
 
 <body>
     <div class="proj">
         <h1>Welcome to Project Management!</h1>
-        <p id="greeting"></p>
+        <p15 id="greeting"></p15>
 
     </div>
-    <div class="proj">
-        <a href="#" class="btn btn-primary mb-3">Create New Project</a>
+    <div class="proj1">
+        <a href="#" class="btn btn-primary mb-3 projbtn">Create New Project</a>
     </div>
-    <div class="proj">
+    <div class="proj2">
+        <h2> My Projects </h2>
         <div class="projrow">
             <div class="project-row">
                 <div class="project-box col">

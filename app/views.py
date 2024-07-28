@@ -63,7 +63,9 @@ def projects(request):
     
     return render(request, 'app/projects.html')
 
-
+def create_project(request):
+    
+    return render(request,'create_project')
 
 @login_required
 def home(request):
