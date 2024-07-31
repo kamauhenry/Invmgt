@@ -59,10 +59,10 @@ class Project(models.Model):
     description = models.TextField(blank=True)
     building_area = models.DecimalField(max_digits=15, decimal_places=4, null=True, blank=True)
     number_of_floors = models.PositiveIntegerField(blank=True, null=True)
-    materials = models.JSONField(blank=True)
+    materials = models.JSONField(blank=True, null=True)
     building_codes = models.TextField(blank=True)
     site_conditions = models.TextField(blank=True)
-    drawings = models.URLField(blank=True)
+    drawings = models.URLField(blank=True,null=True)
     project_requirements = models.TextField(blank=True)
     sustainability_considerations = models.TextField(blank=True)
     external_factors = models.TextField(blank=True)
@@ -168,7 +168,7 @@ class GroupedItems(models.Model):
 
         
 class Labour(models.Model):
-    tenant = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    Project = models.ForeignKey(Project, on_delete=models.CASCADE)
     labour_type = models.CharField(max_length=20)
     NOL = models.PositiveIntegerField()
     Date = models.DateField(default=timezone.now)

@@ -65,7 +65,86 @@ def projects(request):
 
 def create_project(request):
     
-    return render(request,'create_project')
+    form = CreateProjectForm(request.POST or None, request.FILES or None)
+    
+    if request.method == 'POST':
+        if form.is_valid():
+            form_instance = form.save(commit=False)
+            form_instance.project_owner = request.user  # Assuming project owner is the logged-in user
+            form_instance.save()
+            return redirect('projects')  # Redirect to the projects page after successful creation
+    
+    
+    return render(
+        request,
+        'app/create_project.html',
+        {
+            'title': 'Create Project',
+            'message': 'Create project page.',
+            'year': datetime.now().year,
+            'form': form,
+        }
+    )
+
+
+def create_task(request):
+        # Access tenant information directly from current_user.tenant
+   # project_id = request.GET.get('project_id')
+   # if not project_id:
+        # Handle the case where project_id is not provided
+        #return redirect('login')  # Redirect to a default page or show an error
+        # Get the project object
+    #project = get_object_or_404(Project, id=project_id)
+
+    
+    form = CreateTaskForm(request.POST or None, request.FILES or None )
+   # , initial={'project': project}
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form_instance = form.save(commit=False)
+            form_instance.project_owner = request.user  # Assuming project owner is the logged-in user
+            form_instance.save()
+            return redirect('projects')  # Redirect to the projects page after successful creation
+    
+    
+    return render(
+        request,
+        'app/create_task.html',
+        {
+            'title': 'Create task',
+            'message': 'Create task page.',
+            'year': datetime.now().year,
+            'form': form,
+        }
+    )
+
+
+
+def tasks(request):
+    
+    return render(request, 'app/tasks.html', {
+        'title': 'Task n Calendar',
+        'message': ' displaying tasks.',
+        'year': datetime.now().year,
+    })
+
+
+
+def task_events(request):
+    tasks = Task.objects.all()
+    events = []
+
+    for task in tasks:
+        events.append({
+            'title': task.name,
+            'start': task.start_date.isoformat(),
+            'end': task.due_date.isoformat(),
+            'description': task.description,
+        })
+
+    return JsonResponse(events, safe=False)
+
 
 @login_required
 def home(request):
@@ -74,7 +153,7 @@ def home(request):
     # Get the project_id from the request, e.g., from query parameters
     project_id = request.GET.get('project_id')
     if not project_id:
-        # Handle the case where project_id is not provided
+        #Handle the case where project_id is not provided
         return redirect('login')  # Redirect to a default page or show an error
 
     # Get the project object
@@ -111,9 +190,7 @@ def home(request):
 
 @login_required
 def return_item_view(request, pk):
-    current_user = request.user
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     # Access tenant information directly from current_user.tenant
     project_id = request.GET.get('project_id')
@@ -143,10 +220,6 @@ def return_item_view(request, pk):
 @login_required
 def inventory(request):
     """Renders the contact page."""
-    current_user = request.user
-    # Assuming your CustomUser model has a 'tenant' field
-    if current_user.tenant is None:
-        return redirect('login')
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -194,12 +267,12 @@ def add_custom_uom(request):
 	else:
 		messages.success(request, "You Must Be Logged In...") 
 	
+
+
+
 # modified
 def add_record(request):
-    current_user = request.user
-    # Assuming your CustomUser model has a 'tenant' field
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -227,13 +300,11 @@ def add_record(request):
         messages.success(request, "You Must Be Logged In...")
         return redirect('home')
 		
+
+
 #modified
 def add_Person(request):
-    # Each tenant to have its own view
-    current_user = request.user
-    # Assuming your CustomUser model has a 'tenant' field
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -272,10 +343,6 @@ def add_Person(request):
 #modified
 @login_required
 def update_record(request, pk):
-    current_user = request.user
-    # Assuming your CustomUser model has a 'tenant' field
-    if current_user.tenant is None:
-        return redirect('login')
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -343,9 +410,7 @@ def LoginView(request):
 #modified
 @login_required
 def labourers_view(request):
-    current_user = request.user
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -400,9 +465,7 @@ def setup(request):
 #modified
 @login_required
 def delete_labourer(request, pk):
-    current_user = request.user
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -429,9 +492,7 @@ def delete_labourer(request, pk):
 #modified    
 @login_required
 def update_labourer(request, pk):
-    current_user = request.user
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -468,9 +529,7 @@ def register_user(request):
 @login_required
 def grouped_itemsv(request):
     search_query = request.GET.get('q', '')
-    current_user = request.user
-    if current_user.tenant is None:
-        return redirect('login')
+
 
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -516,11 +575,7 @@ def grouped_itemsv(request):
 @login_required
 def issue_item_view(request):
     search_query = request.GET.get('q', '')
-    current_user = request.user
-    
 
-    if current_user.tenant is None:
-        return redirect('login')
     
     project_id = request.GET.get('project_id')
     if not project_id:
@@ -858,3 +913,8 @@ class PersonSet(viewsets.ModelViewSet):
 	queryset = Employee.objects.all()
 	serializer_class = personSerializer
 	
+
+def project_list(request):
+    # Fetch all projects from the database
+    projects = Project.objects.filter(project_owner=request.user).values('name')
+    return JsonResponse(list(projects), safe=False)

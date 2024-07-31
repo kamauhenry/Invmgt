@@ -1,0 +1,39 @@
+{% extends 'app/layout.html' %}
+
+{% load humanize %}
+
+{% load static %}
+{% block content %}
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Task Calendar</title>
+    <!-- FullCalendar CSS -->
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css' rel='stylesheet' />
+    <!-- FullCalendar JS -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js'></script>
+</head>
+<body>
+    <div id='calendar'></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',  // Default view of the calendar
+                events: function (info, successCallback, failureCallback) {
+                    // Fetch events from the server
+                    fetch('{% url "task_events" %}')
+                        .then(response => response.json())
+                        .then(data => successCallback(data))
+                        .catch(error => failureCallback(error));
+                },
+                // Optional: add event handlers here, e.g., click events
+            });
+            calendar.render();
+        });
+    </script>
+</body>
+
+{% endblock %}

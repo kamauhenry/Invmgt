@@ -13,5 +13,6 @@ router.register(r'labours', LabourViewSet)
 router.register(r'customuoms', CustomUOMViewSet)
 
 urlpatterns = [
+    path('api/projects/', project_list, name='project_list'),
     path('', include(router.urls)),
 ]

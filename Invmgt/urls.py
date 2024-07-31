@@ -58,7 +58,9 @@ urlpatterns = [
     path('issuei_pdf/', views.issuei_pdf, name='issuei_pdf'),
     path('projects/', views.projects, name='projects'),
     path('create_project/', views.create_project, name='create_project'),
-    
+    path('create_task/', views.create_task, name='create_task'),
+    path('tasks/', views.tasks, name='tasks'),
+    path('task-events/', views.task_events, name='task_events'),
     path('app/',include('app.urls')),
 
     

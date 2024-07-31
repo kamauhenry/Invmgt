@@ -13,6 +13,9 @@
 
         /* Apply margin to the proj1 class */
         .proj1 {
+            padding: 20px;
+            background-color: #f0f0f0; /* Light grey background for visibility */
+            border-bottom: 2px solid #000; /* Black border line */
             margin-bottom: 20px; /* Space below this div */
         }
 
@@ -42,6 +45,7 @@
             width: 120px;
             height: 150px;
         }
+
     </style>
 </head>
 
@@ -52,26 +56,12 @@
 
     </div>
     <div class="proj1">
-        <a href="#" class="btn btn-primary mb-3 projbtn">Create New Project</a>
+        <a href="{% url 'create_project' %}" class="btn btn-primary mb-3 projbtn">Create New Project +</a>
     </div>
     <div class="proj2">
         <h2> My Projects </h2>
-        <div class="projrow">
-            <div class="project-row">
-                <div class="project-box col">
-                    <button class="btn btn-secondary">Project 1</button>
-                </div>
-            </div>
-            <div class="project-row">
-                <div class="project-box col">
-                    <button class="btn btn-secondary">Project 2</button>
-                </div>
-            </div>
-            <div class="project-row">
-                <div class="project-box col">
-                    <button class="btn btn-secondary">Project 3</button>
-                </div>
-            </div>
+        <div id="project-container " class="projrow">
+            <!-- Project buttons will be dynamically inserted here -->
 
         </div>
     </div>
@@ -87,7 +77,64 @@
             greetingEl.textContent = 'Good Afternoon!';
         } else {
             greetingEl.textContent = 'Good Evening!';
-        }</script>
+        }
+        // Function to render project buttons
+        function renderProjects(projects) {
+            const container = document.getElementById('projects-container');
+
+            // Clear existing content
+            container.innerHTML = '';
+
+            // Generate project buttons
+            projects.forEach(project => {
+                const projectRow = document.createElement('div');
+                projectRow.className = 'project-row';
+
+                const projectBox = document.createElement('div');
+                projectBox.className = 'project-box';
+
+                const button = document.createElement('button');
+                button.className = 'btn-secondary';
+                button.textContent = project.name;
+                button.onclick = () => window.location.href = project.link;
+
+                projectBox.appendChild(button);
+                projectRow.appendChild(projectBox);
+                container.appendChild(projectRow);
+            });
+        }
+
+        // Fetch project data from the Django API
+        fetch('/api/projects/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') // Include CSRF token if needed
+            },
+            credentials: 'include' // Include credentials (cookies) in the request
+        })
+            .then(response => response.json())
+            .then(data => renderProjects(data))
+            .catch(error => console.error('Error fetching project data:', error));
+
+        // Utility function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+
+    </script>
 </body>
 
 
