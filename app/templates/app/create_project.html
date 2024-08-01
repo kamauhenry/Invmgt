@@ -33,7 +33,7 @@
             <br />
             <div class="row">
                 <div class="col-md-6">
-                    <form id="myForm" method="POST" action="{% url 'create_project' %}">
+                    <form id="myForm" method="POST" enctype="multipart/form-data" action="{% url 'create_project' %}">
                         {% csrf_token %}
 
                         {{ form.as_p }}

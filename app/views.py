@@ -38,35 +38,34 @@ from rest_framework import viewsets
 from app.serializers import *
 from django.http import JsonResponse
 from django.http import HttpResponse
+import openai
 
 
+openai.api_key = 'f549c621241c4ae693bfef95c58127be'
 
 
 item_units_used = {}
 
-#def connsql(request):
-#	conn=pyodbc.connect('Driver={ODBC Driver 18 for SQL Server};'
-#					  'Server=JAYDEN;'
-#					  'Database=fpwdb;'
-#					  'UID=sa;'
-#					  'PWD=yrenhke;'
-#					  'Trusted_Connnection=yes;'
-#					  'encrypt=no;'  
-#					  )
-#	cursor=conn.cursor()
-#	cursor.execute()
-#	result=cursor.fetchall()
-#	print(result)
-#	return render(request,'index.html',{'sqlserverconn':result})
 
 def projects(request):
     
     return render(request, 'app/projects.html')
 
 def create_project(request):
-    
+    if request.method == 'POST':
+        form = CreateProjectForm(request.POST, request.FILES)
+        if form.is_valid():
+            project = form.save()
+            feasibility_report = generate_feasibility_report(project)
+            project.feasibility_report = feasibility_report
+            project.save()
+            pdf_url = generate_pdf(feasibility_report)
+            return JsonResponse({'success': True, 'pdf_url': pdf_url})
+    else:
+        form = CreateProjectForm()
+    return render(request, 'app/create_project.html', {'form': form,
+                                                       'year': datetime.now().year,})
     form = CreateProjectForm(request.POST or None, request.FILES or None)
-    
     if request.method == 'POST':
         if form.is_valid():
             form_instance = form.save(commit=False)
@@ -401,10 +400,10 @@ def LoginView(request):
 			return redirect('Dashboard')
 		else:
 			messages.success(request, "Error")
-			print("Successful login, redirecting to Dashboard")
-			return redirect('Dashboard')
+			print("Successful login, redirecting to projects")
+			return redirect('projects')
 	else:
-		return render(request, 'Dashboard.html')
+		return render(request, 'projects.html')
 
 	
 #modified
@@ -918,3 +917,63 @@ def project_list(request):
     # Fetch all projects from the database
     projects = Project.objects.filter(project_owner=request.user).values('name')
     return JsonResponse(list(projects), safe=False)
+
+def generate_feasibility_report(project):
+    project_data = {
+        'name': project.name,
+        'project_owner': project.project_owner.username,
+        'start_date': project.start_date,
+        'end_date': project.end_date,
+        'project_type': project.project_type,
+        'location': project.location,
+        'description': project.description,
+        'building_area': project.building_area,
+        'number_of_floors': project.number_of_floors,
+        'materials': project.materials,
+        'building_codes': project.building_codes,
+        'site_conditions': project.site_conditions,
+        'drawings': project.drawings,
+        'project_requirements': project.project_requirements,
+        'sustainability_considerations': project.sustainability_considerations,
+        'external_factors': project.external_factors,
+        'estimated_completion_time': project.estimated_completion_time,
+        'required_employees': project.required_employees,
+        'detailed_materials_list': project.detailed_materials_list
+    }
+
+    prompt = f"Generate a feasibility report based on the following project data:\n\n{project_data}\n\nAnalyze the project's viability, identify potential risks, and suggest improvements."
+
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        max_tokens=1500
+    )
+
+    return response.choices[0].text
+
+def generate_pdf(report_text):
+    from fpdf import FPDF
+
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Arial', 'B', 12)
+            self.cell(0, 10, 'Feasibility Report', 0, 1, 'C')
+
+        def chapter_title(self, title):
+            self.set_font('Arial', 'B', 12)
+            self.cell(0, 10, title, 0, 1, 'L')
+            self.ln(10)
+
+        def chapter_body(self, body):
+            self.set_font('Arial', '', 12)
+            self.multi_cell(0, 10, body)
+            self.ln()
+
+    pdf = PDF()
+    pdf.add_page()
+    pdf.chapter_title('Feasibility Report')
+    pdf.chapter_body(report_text)
+    pdf_output_path = '/app/static/app/images/feasibility_report.pdf'
+    pdf.output(pdf_output_path)
+
+    return pdf_output_path

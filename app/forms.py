@@ -221,7 +221,7 @@ class CreateProjectForm(forms.ModelForm):
     )
     drawings = forms.URLField(
         max_length=40,
-        widget=forms.URLInput(attrs={'class': 'form-control'}),
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'}),
         required=False
     )
     project_requirements = forms.CharField(
