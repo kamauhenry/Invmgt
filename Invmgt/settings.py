@@ -156,7 +156,7 @@ LOGGING = {
         },
     },
 }
-LOGIN_REDIRECT_URL = 'Dashboard' 
+LOGIN_REDIRECT_URL = 'app/projects.html' 
 
 
 AUTH_USER_MODEL = 'app.CustomUser'

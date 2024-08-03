@@ -1,5 +1,6 @@
 {% extends 'app/layout.html' %}
 {% load humanize %}
+{% block extra_head %}
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -9,7 +10,55 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" />
     <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartData = {{ chart_data|safe }};
+            const PieData = {{ data|safe }};
+
+            // Example of how to use the data in a chart (replace with actual charting code)
+            console.log('Chart Data:', chartData);
+            console.log('Pie Data:', PieData);
+
+            // Your existing AJAX call
+            $.ajax({
+                url: '/Dashboard/',
+                type: 'POST',
+                data: {
+                    csrfmiddlewaretoken: getCookie('csrftoken'),  // Replace with your cookie retrieval function
+                    chart_data: chartData,
+                    pdata: PieData,
+                },
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')  // Replace with your cookie retrieval function
+                },
+                success: function (response) {
+                    // Handle the response
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Error:', textStatus, errorThrown);
+                }
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
 </head>
+{% endblock %}
+
 {% load static %}
 
 {% block content %}
@@ -17,7 +66,7 @@
 
 {% if user.is_authenticated %}
 
-<body >
+<body>
     <div id="wrapper">
         <div class="content-area">
             <div class="container-fluid">
@@ -41,28 +90,27 @@
                                 <h2 style="font-weight: bold;">Total Labourers</h2>
                             </div>
                         </div>
-                        
+
                     </div>
 
-                    
+
                     <br>
 
                     <div class="row mt-4">
                         <div class="col-md-5">
                             <div class="box shadow mt-4">
-                                <canvas id="piechart"> 
-                                       
+                                <canvas id="piechart">
                                 </canvas>
                             </div>
                         </div>
                         <div class="col-md-7">
                             <div class="chart">
                                 <div class="box shadow mt-4">
-                                   <canvas id="barchart"></canvas>
+                                    <canvas id="barchart"></canvas>
                                 </div>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -75,7 +123,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
     <script src="{% static 'app/scripts/Dashboard.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
 </body>
 
 

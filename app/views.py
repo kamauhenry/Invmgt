@@ -53,27 +53,15 @@ def projects(request):
 
 def create_project(request):
     if request.method == 'POST':
-        form = CreateProjectForm(request.POST, request.FILES)
+        form = CreateProjectForm(request.POST)
         if form.is_valid():
-            project = form.save()
-            feasibility_report = generate_feasibility_report(project)
-            project.feasibility_report = feasibility_report
-            project.save()
-            pdf_url = generate_pdf(feasibility_report)
-            return JsonResponse({'success': True, 'pdf_url': pdf_url})
+            try:
+                form.save()
+            except ValueError as e:
+                instance = form.instance
+                return redirect('review_project_pdf', pk=instance.pk)
     else:
         form = CreateProjectForm()
-    return render(request, 'app/create_project.html', {'form': form,
-                                                       'year': datetime.now().year,})
-    form = CreateProjectForm(request.POST or None, request.FILES or None)
-    if request.method == 'POST':
-        if form.is_valid():
-            form_instance = form.save(commit=False)
-            form_instance.project_owner = request.user  # Assuming project owner is the logged-in user
-            form_instance.save()
-            return redirect('projects')  # Redirect to the projects page after successful creation
-    
-    
     return render(
         request,
         'app/create_project.html',
@@ -84,10 +72,57 @@ def create_project(request):
             'form': form,
         }
     )
+def review_project_pdf_view(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    pdf_path = project.pdf_path
+    if request.method == 'POST':
+        project.status = 'approved'
+        project.save()
+        return redirect('project_list')
+    return render(request, 'review_project_pdf.html', {'project': project, 'pdf_path': pdf_path})
 
+@login_required
+def update_project(request, pk):
+    # Get the project object
+    project = get_object_or_404(Project, id=pk)
+
+    # Ensure the user has access to update the project
+    if not request.user.is_superuser and request.user != project.project_owner:
+        messages.error(request, "You do not have permission to update this project.")
+        return redirect('projects')
+
+    form = CreateProjectForm(request.POST or None, instance=project)
+
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Record has been updated!")
+            return redirect('projects')
+
+    return render(request, 'app/update_project.html', {'form': form})	
+
+
+
+@login_required
+def delete_project(request, pk):
+    # Get the project object
+    project = get_object_or_404(Project, id=pk)
+
+    # Ensure the user has access to delete the project
+    if not request.user.is_superuser and request.user != project.project_owner:
+        messages.error(request, "You do not have permission to delete this project.")
+        return redirect('projects')
+
+    if request.method == "POST":
+        project.delete()
+        messages.success(request, "Project has been deleted!")
+        return redirect('projects')
+
+    return render(request, 'app/confirm_delete.html', {'project': project})
+	
 
 def create_task(request):
-        # Access tenant information directly from current_user.tenant
+        
    # project_id = request.GET.get('project_id')
    # if not project_id:
         # Handle the case where project_id is not provided
@@ -129,7 +164,6 @@ def tasks(request):
     })
 
 
-
 def task_events(request):
     tasks = Task.objects.all()
     events = []
@@ -144,6 +178,13 @@ def task_events(request):
 
     return JsonResponse(events, safe=False)
 
+def task_detail(request):
+    
+    return render(request, 'app/task_detail.html', {
+        'title': 'Task Detail',
+        'message': 'Task detail page.',
+        'year': datetime.now().year,
+    }) 
 
 @login_required
 def home(request):
@@ -397,13 +438,13 @@ def LoginView(request):
 		if user is not None:
 			login(request, user)
 			messages.success(request,"You Have Been Logged in")
-			return redirect('Dashboard')
+			return redirect('projects')
 		else:
 			messages.success(request, "Error")
 			print("Successful login, redirecting to projects")
-			return redirect('projects')
+			return redirect('login')
 	else:
-		return render(request, 'projects.html')
+		return render(request, 'app/projects.html')
 
 	
 #modified

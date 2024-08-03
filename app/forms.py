@@ -253,10 +253,7 @@ class CreateProjectForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         required=False
     )
-    feasibility_report = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control'}),
-        required=False
-    )
+
 
     class Meta:
         model = Project

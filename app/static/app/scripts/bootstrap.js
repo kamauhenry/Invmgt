@@ -2012,3 +2012,6 @@ if (!jQuery) { throw new Error("Bootstrap requires jQuery") }
   })
 
 }(window.jQuery);
+document.addEventListener('scroll', function () {
+    // Your scroll event handler code here
+}, { passive: true });

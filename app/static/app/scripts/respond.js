@@ -340,36 +340,9 @@ window.matchMedia = window.matchMedia || (function(doc, undefined){
 })(this);
 
 
-$.ajax({
-	url: '/Dashboard/',
-	type: 'POST',
-	data: {
-		csrfmiddlewaretoken: getCookie('csrftoken'),  // Replace with your cookie retrieval function
-		chart_data: chartData,
-		pdata : PieData,
-	},
-	headers: {
-		'X-CSRFToken': getCookie('csrftoken')  // Replace with your cookie retrieval function
-	},
-	success: function (response) {
-		// Handle the response
-	}
-});
-function getCookie(name) {
-	var cookieValue = null;
-	if (document.cookie && document.cookie !== '') {
-		var cookies = document.cookie.split(';');
-		for (var i = 0; i < cookies.length; i++) {
-			var cookie = cookies[i].trim();
-			// Check if this cookie is the one we're looking for
-			if (cookie.substring(0, name.length + 1) === (name + '=')) {
-				cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-				break;
-			}
-		}
-	}
-	return cookieValue;
-}
+
+
+
 
 
 

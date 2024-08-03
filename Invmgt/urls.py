@@ -26,7 +26,7 @@ urlpatterns = [
     
     path('inventory/', views.inventory, name='inventory'),
     path('setup/', views.setup, name='setup'),
-    path('', views.Dashboard, name='Dashboard'),
+    path('Dashboard/', views.Dashboard, name='Dashboard'),
     path('add_record/', views.add_record, name='add_record'),
     path('CustomUOM/', views.add_custom_uom, name='add_custom_uom'),
     path('person/', views.add_Person, name='add_Person'),
@@ -56,11 +56,13 @@ urlpatterns = [
     path('reports_pdf/', views.reports_pdf, name='reports_pdf'),
     path('groupedi_pdf/', views.groupedi_pdf, name='groupedi_pdf'),
     path('issuei_pdf/', views.issuei_pdf, name='issuei_pdf'),
-    path('projects/', views.projects, name='projects'),
+    path('', views.projects, name='projects'),
     path('create_project/', views.create_project, name='create_project'),
-    path('create_task/', views.create_task, name='create_task'),
+    #once done return this parts project/<int:project_id>
     path('tasks/', views.tasks, name='tasks'),
-    path('task-events/', views.task_events, name='task_events'),
+    path('create-task/', views.create_task, name='create_task'),
+    path('tasks/tasks-events/', views.task_events, name='task_events'),
+    path('task/<int:task_id>/', views.task_detail, name='task_detail'),
     path('app/',include('app.urls')),
 
     

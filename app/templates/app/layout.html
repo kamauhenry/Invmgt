@@ -27,7 +27,7 @@
             width: 100%;
         }
     </style>
-
+    {% block extra_head %}{% endblock %}
 
 </head>
 
@@ -43,7 +43,12 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             {% if user.is_authenticated %}
             <ul class="navbar-nav mr-auto" style="list-style:none;">
-
+                <li class="nav-item ">
+                    <a class="nav-link" href="{% url 'projects' %}">My Projects <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="{% url 'tasks' %}">Tasks <span class="sr-only">(current)</span></a>
+                </li>
                 <li class="nav-item ">
                     <a class="nav-link" href="{% url 'Dashboard' %}">Dashboard <span class="sr-only">(current)</span></a>
                 </li>
@@ -64,7 +69,7 @@
                     <a class="nav-link" href="{% url 'labourers_view' %}">Labour Records</a>
                 </li>
 
-                {% if user.is_authenticated and user.is_staff and user.is_superuser %}
+                {% if user.is_authenticated and user.is_staff  %}
                 <li class="nav-item dropdown">
                     <a class="nav-link text-light dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="setup"></span> Setup
@@ -72,7 +77,9 @@
                     <div class="dropdown-menu" aria-labelledby="userDropdown">
                         <a class="dropdown-item" href="{% url 'reg_user' %}" style="color: #000; background-color: #fff;">Register User</a>
                         <br />
-                        <a class="dropdown-item" href="{% url 'add_custom_uom' %}" style="color: #000; background-color: #fff;">add Custom Unit of Measurement </a>
+                        <a class="dropdown-item" href="{% url 'add_custom_uom' %}" style="color: #000; background-color: #fff;">Custom  Metric units </a>
+                        <br />
+                        <a class="dropdown-item" href="{% url 'add_Person' %}" style="color: #000; background-color: #fff;">add Employee type </a>
                     </div>
                 </li>
 
