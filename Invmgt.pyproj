@@ -35,6 +35,9 @@
     <Compile Include="app\admin.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\ai.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\custom_tenants.py">
       <SubType>Code</SubType>
     </Compile>
@@ -67,6 +70,7 @@
   <ItemGroup>
     <Folder Include="app\" />
     <Folder Include="app\migrations\" />
+    <Folder Include="app\media\" />
     <Folder Include="app\static\app\images\" />
     <Folder Include="app\templatetags\" />
     <Folder Include="app\static\" />
@@ -82,19 +86,24 @@
     <Content Include="app\static\app\content\Dashboard.css" />
     <Content Include="app\static\app\content\projmang.css" />
     <Content Include="app\static\app\scripts\Dashboard.js" />
+    <Content Include="app\templates\app\add_personel.html" />
+    <Content Include="app\templates\app\confirm_delete.html" />
     <Content Include="app\templates\app\create_project.html" />
     <Content Include="app\templates\app\create_task.html" />
     <Content Include="app\templates\app\CustomUOM.html" />
     <Content Include="app\templates\app\Dashboard.html" />
     <Content Include="app\templates\app\issue_item.html" />
     <Content Include="app\templates\app\labourers.html" />
+    <Content Include="app\templates\app\pdf_template.html" />
     <Content Include="app\templates\app\person.html" />
+    <Content Include="app\templates\app\project_details.html" />
     <Content Include="app\templates\app\reg_user.html" />
     <Content Include="app\templates\app\return_item.html" />
     <Content Include="app\templates\app\Setup.html" />
     <Content Include="app\templates\app\tasks.html" />
     <Content Include="app\templates\app\task_details.html" />
     <Content Include="app\templates\app\update_labourer.html" />
+    <Content Include="app\templates\app\update_project.html" />
     <Content Include="app\templates\app\update_record.html" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />

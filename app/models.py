@@ -13,25 +13,14 @@ import json
 import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from django.conf import settings
 
-# Utility function to generate a unique username
-def generate_unique_username():
-    """Generates a unique username with a maximum of 10 retries."""
-    default_name = "user"
-    max_retries = 10
 
-    for _ in range(max_retries):
-        unique_username = f"{default_name}_{get_random_string(length=8)}"
-        if not CustomUser.objects.filter(username=unique_username).exists():
-            return unique_username
-
-    raise ValueError("Failed to generate unique username after %d attempts" % max_retries)
 
 # Custom User Manager
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
-        if extra_fields.get('tenant') is None:
-            extra_fields['tenant'] = self.model.objects.create(username=generate_unique_username())
+
 
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -47,7 +36,7 @@ class CustomUserManager(BaseUserManager):
 
 # Custom User model
 class CustomUser(AbstractUser):
-    tenant = models.OneToOneField('self', on_delete=models.CASCADE, null=True, related_name='tenant_user')
+  
     objects = CustomUserManager()
 
     class Meta:
@@ -57,7 +46,7 @@ class CustomUser(AbstractUser):
 # Project Model
 class Project(models.Model):
     name = models.CharField(max_length=100)
-    project_owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='owned_projects')
+    project_owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_projects')
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     project_type = models.CharField(max_length=50, choices=[('residential', 'Residential'), ('commercial', 'Commercial'), ('infrastructure', 'Infrastructure')], blank=True)
@@ -65,7 +54,7 @@ class Project(models.Model):
     description = models.TextField(blank=True)
     building_area = models.DecimalField(max_digits=15, decimal_places=4, null=True, blank=True)
     number_of_floors = models.PositiveIntegerField(blank=True, null=True)
-    materials = models.JSONField(blank=True, null=True)
+    materials = models.TextField(blank=True, null=True)
     building_codes = models.TextField(blank=True)
     site_conditions = models.TextField(blank=True)
     drawings = models.FileField(upload_to='images/', blank=True, null=True)
@@ -74,62 +63,14 @@ class Project(models.Model):
     external_factors = models.TextField(blank=True)
     estimated_completion_time = models.PositiveIntegerField(blank=True, null=True, help_text="Estimated completion time in days")
     required_employees = models.PositiveIntegerField(blank=True, null=True, help_text="Estimated number of employees required")
-    detailed_materials_list = models.JSONField(blank=True, help_text="Detailed list of materials including types and quantities")
+    detailed_materials_list = models.TextField(blank=True, help_text="Detailed list of materials including types and quantities")
 
     def __str__(self):
         return self.name
     
-def send_data_to_azure_ai(instance):
-    url = ''
-    headers = {'content-type': 'application/json'}
-    data = {
-    'name': instance.name,
-    'start_date': instance.start_date.isoformat(),
-    'end_date': instance.end_date.isoformat() if instance.end_date else None,
-    'project_type': instance.project_type,
-    'location': instance.location,
-    'description': instance.description,
-    'building_area': str(instance.building_area) if instance.building_area else None,
-    'number_of_floors': instance.number_of_floors,
-    'materials': instance.materials,
-    'building_codes': instance.building_codes,
-    'site_conditions': instance.site_conditions,
-    'project_requirements': instance.project_requirements,
-    'sustainability_considerations': instance.sustainability_considerations,
-    'external_factors': instance.external_factors,
-    'estimated_completion_time': instance.estimated_completion_time,
-    'required_employees': instance.required_employees,
-    'detailed_materials_list': instance.detailed_materials_list,
-    }
-    response = requests.post(url, headers=headers, json= data)
 
 
 
-
-def create_pdf_from_json(json_data, pdf_path):
-    c = canvas.Canvas(pdf_path, pagesize=letter)
-    width, height = letter
-    text = c.beginText(40, height - 40)
-    text.setFont("Helvetica", 12)
-
-    for key, value in json_data.items():
-        text.textLine(f"{key}: {value}")
-
-    c.drawText(text)
-    c.showPage()
-    c.save()
-
-
-@receiver(pre_save, sender=Project)
-def pre_save_project(sender, instance, **kwargs):
-    if instance.status == 'pending':
-        json_response = send_data_to_azure_ai(instance)
-        pdf_path = f'media/project_{instance.id}.pdf'
-        create_pdf_from_json(json_response, pdf_path)
-        # Optionally store the PDF path in the instance for later retrieval
-        instance.pdf_path = pdf_path
-        # Raise an exception to prevent the save; the user will review and amend
-        raise ValueError("Review the generated PDF before final submission.")
     
 # Task Model
 class Task(models.Model):
@@ -151,7 +92,7 @@ class Employee(models.Model):
     employee_title = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.user.username
+        return self.employee_title
 
 # sqlserverconn Model
 class sqlserverconn(models.Model):
@@ -175,13 +116,14 @@ class sqlserverconn(models.Model):
     def associate_similar_items(self):
         grouped_item, created = GroupedItems.objects.get_or_create(grouped_item=self.Item, project=self.project)
         self.grouped_item = grouped_item
-        self.save()
+        
 
     def __str__(self):
         return self.Item
 
     def save(self, *args, **kwargs):
-        self.associate_similar_items()
+        if not self.pk:  # Check if the instance is being created for the first time
+            self.associate_similar_items()
         self.Subtotal = self.Unit_cost * self.Units
         super().save(*args, **kwargs)
         self.grouped_item.calculate_totals()
@@ -225,8 +167,8 @@ class GroupedItems(models.Model):
 
         
 class Labour(models.Model):
-    Project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='labours')
-    labour_type = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='labours')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='labours')
+    labour_type = models.CharField(max_length=30)
     NOL = models.PositiveIntegerField()
     Date = models.DateField(default=timezone.now)
     labourer_cost = models.DecimalField(max_digits=15, decimal_places=4, default=0)
@@ -291,12 +233,13 @@ class Custom_UOM(models.Model):
 def update_totals_on_related_save(sender, instance, **kwargs):
     instance.grouped_item.calculate_totals()
 
+# Signal handlers
 @receiver(post_save, sender=sqlserverconn)
 def create_issue_item(sender, instance, **kwargs):
-    grouped_item, _ = GroupedItems.objects.get_or_create(grouped_item=instance.Item, project=instance.project)
-    instance.grouped_item = grouped_item
-    if instance.pk is None:
-        grouped_item.save()
+    if not instance.grouped_item_id:
+        grouped_item, _ = GroupedItems.objects.get_or_create(grouped_item=instance.Item, project=instance.project)
+        instance.grouped_item = grouped_item
+        instance.save()
         
 
 @receiver(post_delete, sender=Project)
@@ -306,14 +249,3 @@ def delete_related_entries(sender, instance, **kwargs):
     instance.groupeditems.all().delete()
     instance.labours.all().delete()
     
-
-@receiver(pre_save, sender=Project)
-def pre_save_project(sender, instance, **kwargs):
-    if instance.status == 'pending':
-        json_response = send_data_to_azure_ai(instance)
-        pdf_path = f'media/project_{instance.id}.pdf'
-        create_pdf_from_json(json_response, pdf_path)
-        # Optionally store the PDF path in the instance for later retrieval
-        instance.pdf_path = pdf_path
-        # Raise an exception to prevent the save; the user will review and amend
-        raise ValueError("Review the generated PDF before final submission.")

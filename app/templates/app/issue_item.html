@@ -20,7 +20,7 @@
     {{ issue_item_form.as_p }}
     <p class="validation-summary-errors">{{ issue_item_form.units_issued.errors }}</p>
     <button class="btn btn-primary" type="submit">Submit</button>
-    <a class="btn btn-warning" href="{% url 'issuei_pdf' %}">Generate Report</a>
+    <a class="btn btn-warning" href="{% url 'generate_excel_report' %}?type=issueitem&name={{ project.name }}">Generate Report</a>
 </form>
 
 <table class="table table-striped table-hover table-bordered">

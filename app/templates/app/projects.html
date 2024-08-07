@@ -60,81 +60,102 @@
     </div>
     <div class="proj2">
         <h2> My Projects </h2>
-        <div id="project-container " class="projrow">
+        <div id="projects-container" class="projrow">
             <!-- Project buttons will be dynamically inserted here -->
 
         </div>
     </div>
 
     <script>
-        const greetingEl = document.getElementById('greeting');
-        const date = new Date();
-        const hour = date.getHours();
+        document.addEventListener('DOMContentLoaded', function () {
+            const greetingEl = document.getElementById('greeting');
+            const date = new Date();
+            const hour = date.getHours();
 
-        if (hour < 12) {
-            greetingEl.textContent = 'Good Morning!';
-        } else if (hour < 17) {
-            greetingEl.textContent = 'Good Afternoon!';
-        } else {
-            greetingEl.textContent = 'Good Evening!';
-        }
-        // Function to render project buttons
-        function renderProjects(projects) {
-            const container = document.getElementById('projects-container');
+            if (hour < 12) {
+                greetingEl.textContent = 'Good Morning!';
+            } else if (hour < 17) {
+                greetingEl.textContent = 'Good Afternoon!';
+            } else {
+                greetingEl.textContent = 'Good Evening!';
+            }
 
-            // Clear existing content
-            container.innerHTML = '';
+            // Function to render project buttons
+            function renderProjects(projects) {
+                const container = document.getElementById('projects-container');
 
-            // Generate project buttons
-            projects.forEach(project => {
-                const projectRow = document.createElement('div');
-                projectRow.className = 'project-row';
+                // Ensure container is not null
+                if (container === null) {
+                    console.error('Container element not found');
+                    return;
+                }
 
-                const projectBox = document.createElement('div');
-                projectBox.className = 'project-box';
+                // Clear existing content
+                container.innerHTML = '';
 
-                const button = document.createElement('button');
-                button.className = 'btn-secondary';
-                button.textContent = project.name;
-                button.onclick = () => window.location.href = project.link;
+                // Generate project buttons
+                projects.forEach(project => {
+                    const projectRow = document.createElement('div');
+                    projectRow.className = 'project-row';
 
-                projectBox.appendChild(button);
-                projectRow.appendChild(projectBox);
-                container.appendChild(projectRow);
-            });
-        }
+                    const projectBox = document.createElement('div');
+                    projectBox.className = 'project-box';
 
-        // Fetch project data from the Django API
-        fetch('/api/projects/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken') // Include CSRF token if needed
-            },
-            credentials: 'include' // Include credentials (cookies) in the request
-        })
-            .then(response => response.json())
-            .then(data => renderProjects(data))
-            .catch(error => console.error('Error fetching project data:', error));
+                    const button = document.createElement('button');
+                    button.className = 'btn-secondary';
+                    button.textContent = project.name;
+                    button.onclick = () => window.location.href = project.link;
 
-        // Utility function to get CSRF token from cookies
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+                    projectBox.appendChild(button);
+                    projectRow.appendChild(projectBox);
+                    container.appendChild(projectRow);
+                });
+            }
+
+            // Fetch project data from the Django API
+            function fetchProjects() {
+                const userId = "{{ request.user.id }}"; // Django template tag to get the logged-in user's ID
+
+                fetch(`/api/projects/${userId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') // Include CSRF token if needed
+                    },
+                    credentials: 'include' // Include credentials (cookies) in the request
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Project data fetched:', data); // Debug log
+                        renderProjects(data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching project data:', error);
+                    });
+            }
+
+            // Utility function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
                     }
                 }
+                return cookieValue;
             }
-            return cookieValue;
-        }
 
-
+            fetchProjects(); // Call the function to fetch projects
+        });
     </script>
+
+
+  
 </body>
 
 

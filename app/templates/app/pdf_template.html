@@ -1,0 +1,30 @@
+{%  extends 'app/layout.html' %}
+    {% block content %}
+
+
+
+
+<head>
+    <title>Project Response</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        p {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Project AI Response</h1>
+    <p>{{ ai_response }}</p>
+</body>
+
+{% endblock %}

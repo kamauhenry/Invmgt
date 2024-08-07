@@ -94,7 +94,7 @@ WSGI_APPLICATION = 'Invmgt.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'fdbp',
+        'NAME': 'fdbp1',
         'USER': 'user1',
         'PASSWORD': 'yrenhke',
         'HOST': 'localhost',
@@ -160,3 +160,6 @@ LOGIN_REDIRECT_URL = 'app/projects.html'
 
 
 AUTH_USER_MODEL = 'app.CustomUser'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

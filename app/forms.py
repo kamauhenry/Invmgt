@@ -52,11 +52,11 @@ class BootstrapAuthenticationForm(AuthenticationForm):
                                    'class': 'form-control',
                                    'placeholder':'Password'}))
 
-class SqlServerConnForm(forms.ModelForm): 
-    
-   # UOM_CHOICES = [('', 'Select Unit')] + list(Custom_UOM.objects.values_list('UOM', 'UOM'))
-    #UOM_CHOICES = [('', 'Select Unit')] + list(Custom_UOM.objects.values_list('UOM', 'UOM'))
-    
+class SqlServerConnForm(forms.ModelForm):
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     Item = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={'class': 'form-control'})
@@ -69,41 +69,39 @@ class SqlServerConnForm(forms.ModelForm):
     Units = forms.FloatField(
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
-    
     Unit_of_measurement = forms.ModelChoiceField(
-    queryset=Custom_UOM.objects.all().order_by('UOM'),
-    empty_label='Select Unit',
-    widget=forms.Select(attrs={'class': 'form-control custom-select', 'id': 'UOM_id'})
-)
-    
+        queryset=Custom_UOM.objects.all().order_by('UOM'),
+        empty_label='Select Unit',
+        widget=forms.Select(attrs={'class': 'form-control custom-select', 'id': 'UOM_id'})
+    )
     Unit_cost = forms.FloatField(
-        widget = forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
     Date = forms.DateField(
-        widget = forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     Subtotal = forms.FloatField(
         required=False,
-        widget = forms.NumberInput(attrs={'class': 'form-control','readOnly': True})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readOnly': True})
     )
+
     class Meta:
-        widgets = {'Date': DateInput()}
         model = sqlserverconn
         exclude = ['Subtotal']
         fields = [
+            'project',
             'Item',
             'Item_Description',
             'Units',
             'Unit_of_measurement',
             'Unit_cost',
             'Date',
-            
         ]
-        
-    
-        
+
     def clean(self):
         cleaned_data = super().clean()
+        # Additional cleaning can be performed here if needed
+        return cleaned_data
        
         
  
@@ -113,6 +111,7 @@ class IssueItemForm(forms.ModelForm):
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         initial=timezone.now()
     )
+    
     
     class Meta:
         model = IssueItem
@@ -136,26 +135,57 @@ class Custom_UOM_form(forms.ModelForm):
         super(Custom_UOM_form, self).__init__(*args, **kwargs)
  
 class Personform(forms.ModelForm):
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     employee_title = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+    user = forms.ModelChoiceField(
+        queryset=CustomUser.objects.all(), #t with an empty queryset
+        widget=forms.Select(attrs={'class': 'form-control'}) # Hide this field from the form
+    )
+
     class Meta:
         model = Employee
-        fields = ['employee_title']
+        fields = ['employee_title', 'project', 'user']
         
     def __init__(self, *args, **kwargs):
         super(Personform, self).__init__(*args, **kwargs)
 
 class LabourForm(forms.ModelForm):
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='project',
+    )
+
     Date = forms.DateField(
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         initial=timezone.now()
     )
-    
+
+
+    labour_type = forms.ChoiceField(
+        choices=[(title, title) for title in Employee.objects.values_list('employee_title', flat=True).distinct()] or [('None', 'No Titles Available')],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    NOL = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+
+    labourer_cost = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+
+
     class Meta:
         model = Labour
-        fields = ['labour_type', 'NOL', 'Date', 'labourer_cost'] 
+        fields = ['labour_type', 'NOL', 'Date', 'labourer_cost', 'project'] 
 
 class DateForm(forms.Form):
     start = forms.DateField(
@@ -172,28 +202,27 @@ class CreateProjectForm(forms.ModelForm):
     )
     end_date = forms.DateField(
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        initial=timezone.now()
+        initial=timezone.now(),
+        required=False  # End date might not be available at the time of form creation
     )
     name = forms.CharField(
-        max_length=40,        
+        max_length=60,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     project_owner = forms.ModelChoiceField(
- 
-        queryset=CustomUser.objects.all(),  # assuming CustomUser is your user model
-        widget=forms.Select(attrs={'class': 'form-control'})
+        queryset=CustomUser.objects.all(),  # Populate with all CustomUser instances
+        widget=forms.Select(attrs={'class': 'form-control'})  # Use the default select widget
     )
     project_type = forms.ChoiceField(
-         
         choices=[('residential', 'Residential'), ('commercial', 'Commercial'), ('infrastructure', 'Infrastructure')],
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     location = forms.CharField(
-        max_length=40,
+        max_length=450,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     description = forms.CharField(
-        max_length=40,
+        max_length=450,
         widget=forms.Textarea(attrs={'class': 'form-control'})
     )
     building_area = forms.DecimalField(
@@ -201,12 +230,11 @@ class CreateProjectForm(forms.ModelForm):
         max_digits=15, decimal_places=4
     )
     number_of_floors = forms.IntegerField(
-       
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         required=False
     )
-    materials = forms.JSONField(
-        max_length=40,
+    materials = forms.CharField(
+        max_length=450,
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         required=False
     )
@@ -225,63 +253,76 @@ class CreateProjectForm(forms.ModelForm):
         required=False
     )
     project_requirements = forms.CharField(
-        max_length=40,
+        max_length=450,
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         required=False
     )
     sustainability_considerations = forms.CharField(
-        max_length=40, 
+        max_length=450,
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         required=False
     )
     external_factors = forms.CharField(
-        max_length=40,
+        max_length=450,
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         required=False
     )
     estimated_completion_time = forms.IntegerField(
-    
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         required=False
     )
     required_employees = forms.IntegerField(
-
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         required=False
     )
-    detailed_materials_list = forms.JSONField(
+    detailed_materials_list = forms.CharField(
+        max_length=450,
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         required=False
     )
 
-
     class Meta:
         model = Project
         fields = [
-    'name',
-    'project_owner',
-    'start_date',
-    'end_date',
-    'project_type',
-    'location',
-    'description',
-    'building_area',
-    'number_of_floors',
-    'materials',
-    'building_codes',
-    'site_conditions',
-    'drawings',
-    'project_requirements',
-    'sustainability_considerations',
-    'external_factors',
-    'estimated_completion_time',
-    'required_employees',
-    'detailed_materials_list',
-    ]
+            'name',
+            'project_owner',
+            'start_date',
+            'end_date',
+            'project_type',
+            'location',
+            'description',
+            'building_area',
+            'number_of_floors',
+            'materials',
+            'building_codes',
+            'site_conditions',
+            'drawings',
+            'project_requirements',
+            'sustainability_considerations',
+            'external_factors',
+            'estimated_completion_time',
+            'required_employees',
+            'detailed_materials_list',
+        ]
 
     def __init__(self, *args, **kwargs):
+        # Extract the current user from kwargs
+        current_user = kwargs.pop('current_user', None)
         super(CreateProjectForm, self).__init__(*args, **kwargs)
 
+        # Set the project_owner field to the current user
+        if current_user:
+            self.fields['project_owner'].queryset = CustomUser.objects.filter(id=current_user.id)
+            self.fields['project_owner'].initial = current_user
+
+    def save(self, commit=True):
+        # Ensure project_owner is set to the current user
+        instance = super().save(commit=False)
+        if not self.instance.project_owner and self.fields['project_owner'].initial:
+            instance.project_owner = self.fields['project_owner'].initial
+        if commit:
+            instance.save()
+        return instance
 
 
 

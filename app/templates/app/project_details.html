@@ -1,0 +1,148 @@
+{% extends 'app/layout.html' %}
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .project-details {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .field {
+            margin-bottom: 15px;
+        }
+
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 200px;
+            font-size: 12px; /* Increase the font size */
+            color: #000;
+            
+        }
+
+        .value {
+            display: inline-block;
+        }
+
+        .field a {
+            text-decoration: none;
+            color: #007bff; /* Adjust link color */
+        }
+
+            .field a:hover {
+                text-decoration: underline;
+            }
+    </style>
+</head>
+<body>
+    <a href="{% url 'delete_project' pk=project.pk %}" class="btn btn-danger" role="button">Delete Project</a>
+
+    <a href="{% url 'tasks' project_id=project.id %}" class="btn btn-primary" role="button">View Tasks</a>
+
+    <a href="{% url 'create_task' %}" class="btn btn-success" role="button">Create Task</a>
+    <div class="project-details">
+        <h1>Project Details</h1>
+        <div class="field">
+            <span class="label">ID:</span>
+            <span class="value">{{ project.id }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Name:</span>
+            <span class="value">{{ project.name }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Project Owner:</span>
+            <span class="value">{{ project.project_owner }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Start Date:</span>
+            <span class="value">{{ project.start_date }}</span>
+        </div>
+        <div class="field">
+            <span class="label">End Date:</span>
+            <span class="value">{{ project.end_date }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Project Type:</span>
+            <span class="value">{{ project.get_project_type_display }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Location:</span>
+            <span class="value">{{ project.location }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Description:</span>
+            <span class="value">{{ project.description }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Building Area:</span>
+            <span class="value">{{ project.building_area }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Number of Floors:</span>
+            <span class="value">{{ project.number_of_floors }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Materials:</span>
+            <span class="value">{{ project.materials }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Building Codes:</span>
+            <span class="value">{{ project.building_codes }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Site Conditions:</span>
+            <span class="value">{{ project.site_conditions }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Drawings:</span>
+            {% if project.drawings %}
+            <a href="{{ project.drawings.url }}" target="_blank">View Drawings</a>
+            {% else %}
+            <span class="value">No drawings available</span>
+            {% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Project Requirements:</span>
+            <span class="value">{{ project.project_requirements }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Sustainability Considerations:</span>
+            <span class="value">{{ project.sustainability_considerations }}</span>
+        </div>
+        <div class="field">
+            <span class="label">External Factors:</span>
+            <span class="value">{{ project.external_factors }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Estimated Completion Time (days):</span>
+            <span class="value">{{ project.estimated_completion_time }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Required Employees:</span>
+            <span class="value">{{ project.required_employees }}</span>
+        </div>
+        <div class="field">
+            <span class="label">Detailed Materials List:</span>
+            <span class="value">{{ project.detailed_materials_list }}</span>
+        </div>
+    </div>
+
+</body>
+
+
+
+
+{% endblock %}

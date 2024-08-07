@@ -19,7 +19,6 @@ import debug_toolbar
 
 
 
-
 urlpatterns = [
     path('index/', views.home, name='home'),
     
@@ -53,16 +52,23 @@ urlpatterns = [
     path('loginpartial/', views.loginpartial, name='loginpartial'),
     path('admin/', admin.site.urls),
     path('reg_user/', views.register_user, name='reg_user'),
-    path('reports_pdf/', views.reports_pdf, name='reports_pdf'),
-    path('groupedi_pdf/', views.groupedi_pdf, name='groupedi_pdf'),
-    path('issuei_pdf/', views.issuei_pdf, name='issuei_pdf'),
+
+
+    path('generate_excel_report/', views.generate_excel_report , name='generate_excel_report'),
+
+
     path('', views.projects, name='projects'),
+    path('<int:project_id>/', views.project_details, name='project_details'),
     path('create_project/', views.create_project, name='create_project'),
+    path('projects/<int:pk>/delete/', views.delete_project, name='delete_project'),
+    path('task/<int:pk>/delete/', views.delete_task, name='delete_task'),
     #once done return this parts project/<int:project_id>
-    path('tasks/', views.tasks, name='tasks'),
+    path('<int:project_id>/tasks/', views.tasks, name='tasks'),
     path('create-task/', views.create_task, name='create_task'),
-    path('tasks/tasks-events/', views.task_events, name='task_events'),
-    path('task/<int:task_id>/', views.task_detail, name='task_detail'),
+    path('task/<int:task_id>/', views.task, name='task_details'),
+    path('<int:project_id>/tasks/tasks-events/', views.task_events, name='task_events'),
+    path('<int:project_id>/task/<int:task_id>/', views.task_detail, name='task_detail'),
+    path('api/projects/<int:user_id>/', views.project_list, name='project_list'),
     path('app/',include('app.urls')),
 
     

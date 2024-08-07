@@ -25,10 +25,10 @@ from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
     # Define fields to display in the list view of the admin interface
-    list_display = ('username', 'email', 'tenant', 'is_staff', 'is_superuser')
+    list_display = ('username', 'email', 'is_staff', 'is_superuser')
     
     # Define fields to filter by in the admin interface
-    list_filter = ('tenant', 'is_staff', 'is_superuser')
+    list_filter = ( 'is_staff', 'is_superuser')
 
     # Define fields to search by in the admin interface
     search_fields = ('username', 'email')
@@ -36,7 +36,7 @@ class CustomUserAdmin(UserAdmin):
     # Define fields to include in the detail view of the admin interface
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Personal Info', {'fields': ('email', 'tenant')}),
+        ('Personal Info', {'fields': ('email',)}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login',)}),
     )
@@ -50,8 +50,7 @@ class CustomUserAdmin(UserAdmin):
     def make_superuser(self, request, queryset):
         queryset.update(is_staff=True, is_superuser=True)
 
-class TenantAdmin(admin.ModelAdmin):
-    pass  # You can customize this further if needed
+
 
 # Register models with their admin classes
 admin.site.register(CustomUser, CustomUserAdmin)

@@ -6,7 +6,43 @@
 
 
 
+<head>
+    <title>{{ title }}</title>
+    <!-- FullCalendar CSS -->
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css' rel='stylesheet' />
+    <!-- FullCalendar JS -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
 
+    <div id="task-details">
+        <h2>Task Details</h2>
+
+        <ul>
+            {% for task in tasks %}
+            <li>
+                <strong>Name:</strong> {{ task.name }}<br>
+                <strong>Start Date:</strong> {{ task.start_date }}<br>
+                <strong>Due Date:</strong> {{ task.due_date }}<br>
+                <strong>Description:</strong> {{ task.description }}<br>
+                <strong>Completed:</strong> {{ task.completed|yesno:"Yes,No" }}<br>
+                <a href="{% url 'delete_task' pk=task.pk %}" class="btn btn-danger" role="button">Delete Task</a>
+            </li>
+            {% endfor %}
+
+        </ul>
+
+     
+
+        <a href="{% url 'create_task' %}" class="btn btn-success" role="button">Create Task</a>
+    </div>
+
+
+</body>
 
 
 {% endblock %}

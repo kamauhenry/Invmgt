@@ -65,8 +65,48 @@
 
 
 {% if user.is_authenticated %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedProjectId = "{{ project.id }}";  // Current project ID from Django context
+        if (selectedProjectId) {
+            const options = document.querySelectorAll('#project_name option');
+            options.forEach(option => {
+                if (option.getAttribute('data-project-id') === selectedProjectId) {
+                    option.selected = true;
+                }
+            });
+        }
+    });
+</script>
+
 
 <body>
+    <form method="GET" action="{% url 'Dashboard' %}">
+        <label for="project_name">Select Project:</label>
+        <select id="project_name" name="project_name">
+            <option value="">--Select a Project--</option>
+            {% for proj in projects %}
+            <option value="{{ proj.id }}" data-project-id="{{ proj.id }}">{{ proj.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+    <form method="GET" action="{% url 'generate_excel_report' %}">
+        <label for="report_type">Select Report Type:</label>
+        <select id="report_type" name="type">
+            <option value="labour">Labour Report</option>
+            <option value="inventory">Inventory Report</option>
+            <option value="groupeditems">Grouped Items Report</option>
+            <option value="issueitem">Issue Item Report</option>
+            <option value="tasks">Tasks Report</option> <!-- Added this option -->
+        </select>
+
+        <input type="hidden" name="name" value="{{ project.name }}">
+
+        <button type="submit" class="btn btn-primary">Generate Report</button>
+    </form>
+
+
     <div id="wrapper">
         <div class="content-area">
             <div class="container-fluid">

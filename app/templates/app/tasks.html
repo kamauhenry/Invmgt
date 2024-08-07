@@ -17,15 +17,9 @@ https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.min.js
 
 {% block content %}
 <h2>Tasks for {{ project.name }}</h2>
-<a href="{% url 'create_task' %}" class="btn btn-primary">Add Task</a>
-<h3>Task List:</h3>
-<ul>
-    {% for task in tasks %}
-    <li>{{ task.title }} - Due: {{ task.due_date }}</li>
-    {% empty %}
-    <li>No tasks yet.</li>
-    {% endfor %}
-</ul>
+<a href="{% url 'create_task'  %}" class="btn btn-primary">Add Task</a>
+
+
 <div id='calendar'></div>
 <script>
 
@@ -62,7 +56,7 @@ https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.min.js
                     });
             },
             eventClick: function (info) {
-                window.location.href = '/task/' + info.event.id + '/';
+                window.location.href = `/task/${info.event.id}/`;
             },
             loading: function (isLoading) {
                 if (isLoading) {

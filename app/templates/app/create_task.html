@@ -25,6 +25,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="row justify-content-center container d-flex align-items-center p-2" style="min-height: 80vh;">
         <div class="col-md-6">
@@ -33,13 +34,14 @@
             <div class="row">
                 <div class="col-md-6">
                     <form id="myForm" method="POST" action="{% url 'create_task' %}">
+
                         {% csrf_token %}
 
                         {{ form.as_p }}
 
                         <br />
                         <button type="submit" class="btn btn-danger">Assign task </button>
-                        <a href="{% url 'tasks' %}" class="btn btn-secondary">Back</a>
+                        
                     </form>
                 </div>
 

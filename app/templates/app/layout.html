@@ -5,8 +5,8 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="refresh" content="120" />
-    <title>{{ title }} - Inventory Management</title>
+
+    <title>{{ title }} - CPMGT </title>
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/Dashboard.css' %}">
@@ -35,7 +35,7 @@
 
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/">Inventory Management</a>
+        <a class="navbar-brand" href="/">CPMGT</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -46,28 +46,32 @@
                 <li class="nav-item ">
                     <a class="nav-link" href="{% url 'projects' %}">My Projects <span class="sr-only">(current)</span></a>
                 </li>
+                {% if not is_project_page and project %}
                 <li class="nav-item ">
-                    <a class="nav-link" href="{% url 'tasks' %}">Tasks <span class="sr-only">(current)</span></a>
+                    <a class="nav-link"  href="{% url 'Dashboard' %}" >Dashboard</a>
                 </li>
                 <li class="nav-item ">
-                    <a class="nav-link" href="{% url 'Dashboard' %}">Dashboard <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{% url 'tasks' project.id %}">task_events <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item ">
                     <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'inventory' %}">Inventory</a>
+                    <a class="nav-link" href="{% url 'inventory'  %}">Inventory</a>
                 </li>
 
+
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'grouped_items' %}">Sub-Categories</a>
+                    <a class="nav-link" href="{% url 'grouped_items'   %}">Sub-Categories</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'issue_item_view' %}">Issue Item</a>
+                    <a class="nav-link" href="{% url 'issue_item_view'  %}">Issue Item</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'labourers_view' %}">Labour Records</a>
+                    <a class="nav-link" href="{% url 'labourers_view'  %}">Labour Records</a>
                 </li>
+                {% endif %}
+
 
                 {% if user.is_authenticated and user.is_staff  %}
                 <li class="nav-item dropdown">
@@ -128,7 +132,7 @@
 
     <footer class="footer mt-5">
         <div class="container">
-            <p>&copy; {{ year }} - Inventory Management</p>
+            <p>&copy; {{ year }} - Construction Project Management</p>
         </div>
     </footer>
     <!-- new scripts -->
